@@ -49,6 +49,9 @@ void TF_UsartChannel2_Loop (void);
 void TF_UsartChannel3_Loop (void);
 void TF_UsartChannel4_Loop (void);
 
+void TF_UsartRpi_Loop (void);
+void TF_UsartRpi_String (void);
+
 // void TF_Adc_Usart1_Tx (void);
 // void TF_Adc_Usart1_Voltages (void);
 
@@ -68,9 +71,11 @@ void TF_Hardware_Tests (void)
     // TF_UsartChannel1_Loop ();
     // TF_UsartChannel2_Loop ();
     // TF_UsartChannel3_Loop ();
-    TF_UsartChannel4_Loop ();    
+    // TF_UsartChannel4_Loop ();    
 
-    // TF_Usart1_Tx_String ();
+    // TF_UsartRpi_Loop ();
+    TF_UsartRpi_String ();
+
     // TF_Adc_Usart1_Tx ();
     // TF_Adc_Usart1_Voltages ();
 
@@ -346,6 +351,63 @@ void TF_UsartChannel4_Loop (void)
             UsartChannel4ReadBuffer(buff, 100);
             if (strncmp(buff, "Mariano", sizeof("Mariano") - 1) == 0)
                 SYNC_CH1_ON;
+        }
+    }
+}
+
+
+// place a shortcut Rx Tx on Rpi connector
+void TF_UsartRpi_Loop (void)
+{
+    char buff [100];
+    
+    UsartRpiConfig ();
+    
+    while (1)
+    {
+        if (!timer_standby)
+        {
+            UsartRpiSend ("Mariano\n");
+            timer_standby = 2000;
+            if (SYNC_CH1)
+                SYNC_CH1_OFF;
+        }
+
+        if (UsartRpiHaveData ())
+        {
+            UsartRpiHaveDataReset ();
+            UsartRpiReadBuffer (buff, 100);
+            if (strncmp(buff, "Mariano", sizeof("Mariano") - 1) == 0)
+                SYNC_CH1_ON;
+        }
+    }
+}
+
+
+// Terminal Looping on Rpi connector
+void TF_UsartRpi_String (void)
+{
+    char buff [100];
+
+    UsartRpiConfig ();
+    UsartRpiSend("rpi usart test... send a string:\n");
+    
+    while (1)
+    {
+        if (UsartRpiHaveData())
+        {
+            UsartRpiHaveDataReset();
+            UsartRpiReadBuffer(buff, 100);
+
+            Wait_ms(1000);
+
+            int i = strlen(buff);
+            if (i < 99)
+            {
+                buff[i] = '\n';
+                buff[i+1] = '\0';
+                UsartRpiSend(buff);
+            }
         }
     }
 }

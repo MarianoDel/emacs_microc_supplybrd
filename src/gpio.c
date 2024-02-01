@@ -126,9 +126,9 @@ void GpioInit (void)
     GPIOA->CRH = temp;
 
     //--- GPIOA Pull-Up Pull-Dwn ------------------//
-    temp = GPIOA->ODR;    //PA3 pull-up; PA10 pull-up; PA11 pull-up
-    temp &= 0xF3F7;
-    temp |= 0x0C08;
+    temp = GPIOA->ODR;    //PA3 pull-up; PA11 pull-up    
+    temp &= 0xF7F7;       // PA10 NO pull-up;
+    temp |= 0x0808;
     GPIOA->ODR = temp;
 
     //--- GPIOB Low Side -------------------//
