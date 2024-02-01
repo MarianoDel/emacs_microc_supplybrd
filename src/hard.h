@@ -85,24 +85,36 @@
 #ifdef HARDWARE_VERSION_1_0
 
 // PA defines ----
-// PA0 PA1 NC
+// PA0
+#define ENA_ENCODER    ((GPIOA->ODR & 0x0001) == 0)
+#define ENA_ENCODER_OFF    (GPIOA->BSRR = 0x00000001)
+#define ENA_ENCODER_ON    (GPIOA->BSRR = 0x00010000)
+
+// PA1 NC
 // PA2 PA3 Alternative Usart2 Tx Rx
 
 // PA4 Analog Channel 4 (SENSE_12V_EXT)
 // PA5 Analog Channel 5 (SENSE_BAT_A)
 // PA6 Analog Channel 6 (SENSE_BAT_B)
 
-// PA7 Analog Channel 7 (V_SENSE_8V)
+// PA7 NC
 
 // PA8
 #define ENA_BOOST    ((GPIOA->ODR & 0x0100) != 0)
 #define ENA_BOOST_ON    (GPIOA->BSRR = 0x00000100)
 #define ENA_BOOST_OFF    (GPIOA->BSRR = 0x01000000)
 
-
 // PA9 PA10 Alternative Usart1 Tx Rx
 
-// PA11 PA12 PA13 PA14 PA15 NC
+// PA11
+#define PROBE_SENSE_CH4    ((GPIOA->IDR & 0x0800) == 0)
+
+// PA12
+#define ACT_PROBE_CH4    ((GPIOA->ODR & 0x1000) != 0)
+#define ACT_PROBE_CH4_ON    (GPIOA->BSRR = 0x00001000)
+#define ACT_PROBE_CH4_OFF    (GPIOA->BSRR = 0x10000000)
+
+// PA13 PA14 PA15 NC jtag
 
 // PB defines ----
 // PB0 
@@ -111,85 +123,81 @@
 #define ACT_PROBE_CH2_OFF    (GPIOB->BSRR = 0x00010000)
 
 // PB1
-#define ACT_PROBE_CH3    ((GPIOB->ODR & 0x0002) != 0)
-#define ACT_PROBE_CH3_ON    (GPIOB->BSRR = 0x00000002)
-#define ACT_PROBE_CH3_OFF    (GPIOB->BSRR = 0x00020000)
+#define SYNC_CH2    ((GPIOB->ODR & 0x0002) != 0)
+#define SYNC_CH2_ON    (GPIOB->BSRR = 0x00000002)
+#define SYNC_CH2_OFF    (GPIOB->BSRR = 0x00020000)
 
 //PB2
-#define ACT_PROBE_CH4    ((GPIOB->ODR & 0x0004) != 0)
-#define ACT_PROBE_CH4_ON    (GPIOB->BSRR = 0x00000004)
-#define ACT_PROBE_CH4_OFF    (GPIOB->BSRR = 0x00040000)
+#define ENA_CH2    ((GPIOB->ODR & 0x0004) == 0)
+#define ENA_CH2_OFF    (GPIOB->BSRR = 0x00000004)
+#define ENA_CH2_ON    (GPIOB->BSRR = 0x00040000)
 
-// PB3 PB4 PB5 NC
+// PB3 PB4 NC jtag
+// PB5 NC
 
-// PB6
-#define SYNC_CH4    ((GPIOB->ODR & 0x0040) != 0)
-#define SYNC_CH4_ON    (GPIOB->BSRR = 0x00000040)
-#define SYNC_CH4_OFF    (GPIOB->BSRR = 0x00400000)
-
-// PB7
-#define SYNC_CH3    ((GPIOB->ODR & 0x0080) != 0)
-#define SYNC_CH3_ON    (GPIOB->BSRR = 0x00000080)
-#define SYNC_CH3_OFF    (GPIOB->BSRR = 0x00800000)
+// PB6 Alternative I2C1_SCL
+// PB7 Alternative I2C1_SDA
 
 // PB8
-#define SYNC_CH2    ((GPIOB->ODR & 0x0100) != 0)
-#define SYNC_CH2_ON    (GPIOB->BSRR = 0x00000100)
-#define SYNC_CH2_OFF    (GPIOB->BSRR = 0x01000000)
+#define SYNC_CH4    ((GPIOB->ODR & 0x0100) != 0)
+#define SYNC_CH4_ON    (GPIOB->BSRR = 0x00000100)
+#define SYNC_CH4_OFF    (GPIOB->BSRR = 0x01000000)
 
 // PB9
-#define SYNC_CH1    ((GPIOB->ODR & 0x0200) != 0)
-#define SYNC_CH1_ON    (GPIOB->BSRR = 0x00000200)
-#define SYNC_CH1_OFF    (GPIOB->BSRR = 0x02000000)
+#define ENA_CH4    ((GPIOB->ODR & 0x0200) == 0)
+#define ENA_CH4_OFF    (GPIOB->BSRR = 0x00000200)
+#define ENA_CH4_ON    (GPIOB->BSRR = 0x02000000)
 
 // PB10 PB11 Alternative Usart3 Tx Rx
 
 // PB12
-#define ENA_CH4    ((GPIOB->ODR & 0x1000) != 0)
-#define ENA_CH4_ON    (GPIOB->BSRR = 0x00001000)
-#define ENA_CH4_OFF    (GPIOB->BSRR = 0x10000000)
+#define PROBE_SENSE_CH3    ((GPIOB->IDR & 0x1000) == 0)
 
-// PB13 
-#define ENA_CH3    ((GPIOB->ODR & 0x2000) != 0)
-#define ENA_CH3_ON    (GPIOB->BSRR = 0x00002000)
-#define ENA_CH3_OFF    (GPIOB->BSRR = 0x20000000)
+// PB13
+#define ACT_PROBE_CH3    ((GPIOB->ODR & 0x2000) != 0)
+#define ACT_PROBE_CH3_ON    (GPIOB->BSRR = 0x00002000)
+#define ACT_PROBE_CH3_OFF    (GPIOB->BSRR = 0x20000000)
 
 // PB14
-#define ENA_CH2    ((GPIOB->ODR & 0x4000) != 0)
-#define ENA_CH2_ON    (GPIOB->BSRR = 0x00004000)
-#define ENA_CH2_OFF    (GPIOB->BSRR = 0x40000000)
+#define SYNC_CH3    ((GPIOB->ODR & 0x4000) != 0)
+#define SYNC_CH3_ON    (GPIOB->BSRR = 0x00004000)
+#define SYNC_CH3_OFF    (GPIOB->BSRR = 0x40000000)
 
 // PB15
-#define ENA_CH1    ((GPIOB->ODR & 0x8000) != 0)
-#define ENA_CH1_ON    (GPIOB->BSRR = 0x00008000)
-#define ENA_CH1_OFF    (GPIOB->BSRR = 0x80000000)
+#define ENA_CH3    ((GPIOB->ODR & 0x8000) == 0)
+#define ENA_CH3_OFF    (GPIOB->BSRR = 0x00008000)
+#define ENA_CH3_ON    (GPIOB->BSRR = 0x80000000)
 
 // PC defines ----
 // PC0
 #define PROBE_SENSE_CH1    ((GPIOC->IDR & 0x0001) == 0)
 
 // PC1
-#define PROBE_SENSE_CH2    ((GPIOC->IDR & 0x0002) == 0)
+#define ACT_PROBE_CH1    ((GPIOC->ODR & 0x0002) != 0)
+#define ACT_PROBE_CH1_ON    (GPIOC->BSRR = 0x00000002)
+#define ACT_PROBE_CH1_OFF    (GPIOC->BSRR = 0x00020000)
 
 // PC2
-#define PROBE_SENSE_CH3    ((GPIOC->IDR & 0x0004) == 0)
+#define SYNC_CH1    ((GPIOC->ODR & 0x0004) != 0)
+#define SYNC_CH1_ON    (GPIOC->BSRR = 0x00000004)
+#define SYNC_CH1_OFF    (GPIOC->BSRR = 0x00040000)
 
 // PC3
-#define PROBE_SENSE_CH4    ((GPIOC->IDR & 0x0008) == 0)
+#define ENA_CH1    ((GPIOC->ODR & 0x0008) == 0)
+#define ENA_CH1_OFF    (GPIOC->BSRR = 0x00000008)
+#define ENA_CH1_ON    (GPIOC->BSRR = 0x00080000)
 
 // PC4 NC
 
 // PC5
-#define ACT_PROBE_CH1    ((GPIOC->ODR & 0x0020) != 0)
-#define ACT_PROBE_CH1_ON    (GPIOC->BSRR = 0x00000020)
-#define ACT_PROBE_CH1_OFF    (GPIOC->BSRR = 0x00200000)
+#define PROBE_SENSE_CH2    ((GPIOC->IDR & 0x0020) == 0)
 
 // PC6 NC
 
 // PC7 
-#define ENA_5V_COMM    ((GPIOC->ODR & 0x0080) != 0)
-#define ENA_5V_COMM_ON    (GPIOC->BSRR = 0x00000080)
-#define ENA_5V_COMM_OFF    (GPIOC->BSRR = 0x00800000)
+#define ENA_5V_COMM    ((GPIOC->ODR & 0x0080) == 0)
+#define ENA_5V_COMM_OFF    (GPIOC->BSRR = 0x00000080)
+#define ENA_5V_COMM_ON    (GPIOC->BSRR = 0x00800000)
 
 // PC8
 #define ENA_LCD    ((GPIOC->ODR & 0x0100) != 0)
@@ -197,16 +205,20 @@
 #define ENA_LCD_OFF    (GPIOC->BSRR = 0x01000000)
 
 // PC9
-#define ENA_RPI    ((GPIOC->ODR & 0x0200) != 0)
-#define ENA_RPI_ON    (GPIOC->BSRR = 0x00000200)
-#define ENA_RPI_OFF    (GPIOC->BSRR = 0x02000000)
+#define ENA_RPI    ((GPIOC->ODR & 0x0200) == 0)
+#define ENA_RPI_OFF    (GPIOC->BSRR = 0x00000200)
+#define ENA_RPI_ON    (GPIOC->BSRR = 0x02000000)
 
-// PC10 PC11 PC12 NC
+// PC10 PC11 Alternative Uart4 Tx Rx
+
+// PC12 Alternative Uart5 Tx
 
 // PC13 PC14 PC15 NC
 
 // PD defines ----
-// PD0 PD1 PD2 NC
+// PD0 PD1 NC
+
+// PD2 Alternative Uart5 Rx
 
 #endif //HARDWARE_VERSION_1_0
 

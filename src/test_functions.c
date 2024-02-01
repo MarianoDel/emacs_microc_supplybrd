@@ -36,6 +36,14 @@ extern volatile unsigned short timer_standby;
 
 // Module Private Functions ----------------------------------------------------
 void TF_Act_Channels (void);
+void TF_Enable_Channels (void);
+void TF_Synchro_Channels (void);
+void TF_Enable_5V_Comm (void);
+void TF_Enable_Lcd (void);
+void TF_Enable_Rpi (void);
+void TF_Enable_Encoder (void);
+void TF_Enable_Boost (void);
+
 void TF_UsartChannel1_Tx (void);
 
 // void TF_Adc_Usart1_Tx (void);
@@ -45,8 +53,17 @@ void TF_UsartChannel1_Tx (void);
 // Module Functions ------------------------------------------------------------
 void TF_Hardware_Tests (void)
 {
-    TF_Act_Channels ();
-    // TF_UsartChannel1_Tx ();
+    // TF_Act_Channels ();
+    // TF_Enable_Channels ();
+    // TF_Synchro_Channels ();
+    // TF_Enable_5V_Comm ();
+    // TF_Enable_Lcd ();
+    // TF_Enable_Rpi ();
+    // TF_Enable_Encoder ();
+    TF_Enable_Boost ();
+
+
+// TF_UsartChannel1_Tx ();
     // TF_Usart1_Tx_String ();
     // TF_Adc_Usart1_Tx ();
     // TF_Adc_Usart1_Voltages ();
@@ -73,6 +90,144 @@ void TF_Act_Channels (void)
             ACT_PROBE_CH2_ON;
             ACT_PROBE_CH3_ON;
             ACT_PROBE_CH4_ON;            
+        }
+    }
+}
+
+
+void TF_Enable_Channels (void)
+{
+    while (1)
+    {
+        Wait_ms(1000);
+
+        if (ENA_CH1)
+        {
+            ENA_CH1_OFF;
+            ENA_CH2_OFF;
+            ENA_CH3_OFF;
+            ENA_CH4_OFF;            
+        }
+        else
+        {
+            ENA_CH1_ON;
+            ENA_CH2_ON;
+            ENA_CH3_ON;
+            ENA_CH4_ON;            
+        }
+    }
+}
+
+
+void TF_Synchro_Channels (void)
+{
+    while (1)
+    {
+        Wait_ms(1000);
+
+        if (SYNC_CH1)
+        {
+            SYNC_CH1_OFF;
+            SYNC_CH2_OFF;
+            SYNC_CH3_OFF;
+            SYNC_CH4_OFF;            
+        }
+        else
+        {
+            SYNC_CH1_ON;
+            SYNC_CH2_ON;
+            SYNC_CH3_ON;
+            SYNC_CH4_ON;            
+        }
+    }
+}
+
+
+void TF_Enable_5V_Comm (void)
+{
+    while (1)
+    {
+        Wait_ms(1000);
+
+        if (ENA_5V_COMM)
+        {
+            ENA_5V_COMM_OFF;
+        }
+        else
+        {
+            ENA_5V_COMM_ON;
+        }
+    }
+}
+
+
+void TF_Enable_Lcd (void)
+{
+    while (1)
+    {
+        Wait_ms(1000);
+
+        if (ENA_LCD)
+        {
+            ENA_LCD_OFF;
+        }
+        else
+        {
+            ENA_LCD_ON;
+        }
+    }
+}
+
+
+void TF_Enable_Rpi (void)
+{
+    while (1)
+    {
+        Wait_ms(1000);
+
+        if (ENA_RPI)
+        {
+            ENA_RPI_OFF;
+        }
+        else
+        {
+            ENA_RPI_ON;
+        }
+    }
+}
+
+
+void TF_Enable_Encoder (void)
+{
+    while (1)
+    {
+        Wait_ms(1000);
+
+        if (ENA_ENCODER)
+        {
+            ENA_ENCODER_OFF;
+        }
+        else
+        {
+            ENA_ENCODER_ON;
+        }
+    }
+}
+
+
+void TF_Enable_Boost (void)
+{
+    while (1)
+    {
+        Wait_ms(1000);
+
+        if (ENA_BOOST)
+        {
+            ENA_BOOST_OFF;
+        }
+        else
+        {
+            ENA_BOOST_ON;
         }
     }
 }
