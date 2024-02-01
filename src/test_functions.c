@@ -44,7 +44,10 @@ void TF_Enable_Rpi (void);
 void TF_Enable_Encoder (void);
 void TF_Enable_Boost (void);
 
-void TF_UsartChannel1_Tx (void);
+void TF_UsartChannel1_Loop (void);
+void TF_UsartChannel2_Loop (void);
+void TF_UsartChannel3_Loop (void);
+void TF_UsartChannel4_Loop (void);
 
 // void TF_Adc_Usart1_Tx (void);
 // void TF_Adc_Usart1_Voltages (void);
@@ -60,10 +63,13 @@ void TF_Hardware_Tests (void)
     // TF_Enable_Lcd ();
     // TF_Enable_Rpi ();
     // TF_Enable_Encoder ();
-    TF_Enable_Boost ();
+    // TF_Enable_Boost ();
 
+    // TF_UsartChannel1_Loop ();
+    // TF_UsartChannel2_Loop ();
+    // TF_UsartChannel3_Loop ();
+    TF_UsartChannel4_Loop ();    
 
-// TF_UsartChannel1_Tx ();
     // TF_Usart1_Tx_String ();
     // TF_Adc_Usart1_Tx ();
     // TF_Adc_Usart1_Voltages ();
@@ -233,14 +239,114 @@ void TF_Enable_Boost (void)
 }
 
 
-void TF_UsartChannel1_Tx (void)
+// place a shortcut on IC4 2 & IC3 4
+void TF_UsartChannel1_Loop (void)
 {
+    char buff [100];
+    
     UsartChannel1Config();
     
     while (1)
     {
-        UsartChannel1Send("Mariano\n");
-        Wait_ms(1000);
+        if (!timer_standby)
+        {
+            UsartChannel1Send("Mariano\n");
+            timer_standby = 2000;
+            if (SYNC_CH1)
+                SYNC_CH1_OFF;
+        }
+
+        if (UsartChannel1HaveData())
+        {
+            UsartChannel1HaveDataReset();
+            UsartChannel1ReadBuffer(buff, 100);
+            if (strncmp(buff, "Mariano", sizeof("Mariano") - 1) == 0)
+                SYNC_CH1_ON;
+        }
+    }
+}
+
+
+// place a shortcut on IC4 2 & IC3 4
+void TF_UsartChannel2_Loop (void)
+{
+    char buff [100];
+    
+    UsartChannel2Config();
+    
+    while (1)
+    {
+        if (!timer_standby)
+        {
+            UsartChannel2Send("Mariano\n");
+            timer_standby = 2000;
+            if (SYNC_CH1)
+                SYNC_CH1_OFF;
+        }
+
+        if (UsartChannel2HaveData())
+        {
+            UsartChannel2HaveDataReset();
+            UsartChannel2ReadBuffer(buff, 100);
+            if (strncmp(buff, "Mariano", sizeof("Mariano") - 1) == 0)
+                SYNC_CH1_ON;
+        }
+    }
+}
+
+
+// place a shortcut on IC4 2 & IC3 4
+void TF_UsartChannel3_Loop (void)
+{
+    char buff [100];
+    
+    UsartChannel3Config();
+    
+    while (1)
+    {
+        if (!timer_standby)
+        {
+            UsartChannel3Send("Mariano\n");
+            timer_standby = 2000;
+            if (SYNC_CH1)
+                SYNC_CH1_OFF;
+        }
+
+        if (UsartChannel3HaveData())
+        {
+            UsartChannel3HaveDataReset();
+            UsartChannel3ReadBuffer(buff, 100);
+            if (strncmp(buff, "Mariano", sizeof("Mariano") - 1) == 0)
+                SYNC_CH1_ON;
+        }
+    }
+}
+
+
+// place a shortcut on IC4 2 & IC3 4
+void TF_UsartChannel4_Loop (void)
+{
+    char buff [100];
+    
+    UsartChannel4Config();
+    
+    while (1)
+    {
+        if (!timer_standby)
+        {
+            UsartChannel4Send("Mariano\n");
+            timer_standby = 2000;
+            if (SYNC_CH1)
+                SYNC_CH1_OFF;
+        }
+
+        if (UsartChannel4HaveData())
+        {
+            UsartChannel4HaveDataReset();
+            UsartChannel4ReadBuffer(buff, 100);
+            if (strncmp(buff, "Mariano", sizeof("Mariano") - 1) == 0)
+                SYNC_CH1_ON;
+        }
     }
 }
 
