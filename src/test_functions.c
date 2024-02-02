@@ -52,6 +52,7 @@ void TF_UsartChannel4_Loop (void);
 void TF_UsartRpi_Loop (void);
 void TF_UsartRpi_String (void);
 
+void TF_PowerOn_Channel1_Channel2 (void);
 // void TF_Adc_Usart1_Tx (void);
 // void TF_Adc_Usart1_Voltages (void);
 
@@ -74,7 +75,9 @@ void TF_Hardware_Tests (void)
     // TF_UsartChannel4_Loop ();    
 
     // TF_UsartRpi_Loop ();
-    TF_UsartRpi_String ();
+    // TF_UsartRpi_String ();
+
+    TF_PowerOn_Channel1_Channel2 ();
 
     // TF_Adc_Usart1_Tx ();
     // TF_Adc_Usart1_Voltages ();
@@ -410,6 +413,16 @@ void TF_UsartRpi_String (void)
             }
         }
     }
+}
+
+
+void TF_PowerOn_Channel1_Channel2 (void)
+{
+    ENA_BOOST_ON;
+    ENA_CH1_ON;
+    ENA_CH2_ON;
+    
+    while (1);
 }
 
 

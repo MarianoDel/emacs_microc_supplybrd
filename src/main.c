@@ -18,6 +18,7 @@
 #include "dac.h"
 #include "tim.h"
 #include "gpio.h"
+#include "usart_channels.h"
 #include "usart.h"
 
 #include "comms.h"
@@ -52,7 +53,6 @@ volatile unsigned short adc_ch [ADC_CHANNEL_QUANTITY];
 void TimingDelay_Decrement(void);
 void SysTickError (void);
 
-// #define RPI_Flush_Comms (comms_messages_rpi &= ~COMM_RPI_ALL_MSG_MASK)
 
 
 // Module Functions ------------------------------------------------------------
@@ -66,7 +66,7 @@ int main (void)
         SysTickError();
 
     // Hardware Tests
-    TF_Hardware_Tests ();
+    // TF_Hardware_Tests ();
 
     // --- main program inits. ---
     // //-- DMA configuration.
@@ -90,24 +90,43 @@ int main (void)
     // //-- TIM1 for signals module sequence ready
     // TIM6_Init();
     // TIM7_Init();
+    //-- Starts with all channels disabled
+    Ena_Ch1_Off();
+    Ena_Ch2_Off();
+    Ena_Ch3_Off();
+    Ena_Ch4_Off();
+
+    //-- Comms with rasp & channels
+    UsartRpiConfig ();
+    UsartChannel1Config ();
+    UsartChannel2Config ();
+
+    char buff [120];
+    char buff_tx [128];            
     
+    //-- Main Loop --------------------------
+    while (1)
+    {
+        // update the channels & rpi comms
+        Comms_Update ();
 
-    // //-- Main Loop --------------------------
-    // while (1)
-    // {
-    //     // // update the antennas module states
-    //     // AntennaUpdateStates ();
+        // channels bridge
+        if (UsartChannel1HaveData())
+        {
+            UsartChannel1HaveDataReset();
+            UsartChannel1ReadBuffer(buff, 128);
+            sprintf(buff_tx,"ch1 %s\n", buff);
+            UsartRpiSend(buff_tx);
+        }
 
-    //     // update the channels comms
-    //     Comms_Update ();
-
-    //     // update treatment state
-    //     Treatment_Manager();
-
-    //     // the update of led and buzzer on Treatment_Manager()
-    //     UpdateLed();
-
-    // }
+        if (UsartChannel2HaveData())
+        {
+            UsartChannel2HaveDataReset();
+            UsartChannel2ReadBuffer(buff, 128);
+            sprintf(buff_tx,"ch2 %s\n", buff);
+            UsartRpiSend(buff_tx);
+        }
+    }
 }
 
 //--- End of Main ---//

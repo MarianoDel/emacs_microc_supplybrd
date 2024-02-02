@@ -31,6 +31,53 @@ extern volatile unsigned short adc_ch [];
 
 
 // Module Functions ------------------------------------------------------------
+void Ena_Ch1_On (void)
+{
+    ENA_CH1_ON;
+}
+
+
+void Ena_Ch2_On (void)
+{
+    ENA_CH2_ON;
+}
+
+
+void Ena_Ch3_On (void)
+{
+    ENA_CH3_ON;
+}
+    
+void Ena_Ch4_On (void)
+{
+    ENA_CH4_ON;
+}
+
+
+void Ena_Ch1_Off (void)
+{
+    ENA_CH1_OFF;
+}
+
+
+void Ena_Ch2_Off (void)
+{
+    ENA_CH2_OFF;
+}
+
+
+void Ena_Ch3_Off (void)
+{
+    ENA_CH3_OFF;
+}
+
+
+void Ena_Ch4_Off (void)
+{
+    ENA_CH4_OFF;
+}
+
+
 void Hard_GetHardSoft (char * buff)
 {
     sprintf(buff, "%s %s\n", HARD, SOFT);

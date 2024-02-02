@@ -83,8 +83,8 @@
 volatile unsigned char * ptx1;
 volatile unsigned char * ptx1_pckt_index;
 volatile unsigned char * prx1;
-volatile unsigned char tx1buff[SIZEOF_TXDATA];
-volatile unsigned char rx1buff[SIZEOF_RXDATA];
+volatile unsigned char tx1buff[4*SIZEOF_TXDATA];
+volatile unsigned char rx1buff[4*SIZEOF_RXDATA];
 volatile unsigned char usart1_have_data = 0;
 
 //--- USART2 ---//

@@ -229,4 +229,13 @@ void Hard_GetVoltages (char * buff);
 void Hard_GetHardSoft (char * buff);
 void Hard_GetVoltages_Complete (void);
 
+void Ena_Ch1_On (void);
+void Ena_Ch2_On (void);
+void Ena_Ch3_On (void);
+void Ena_Ch4_On (void);
+void Ena_Ch1_Off (void);
+void Ena_Ch2_Off (void);
+void Ena_Ch3_Off (void);
+void Ena_Ch4_Off (void);
+
 #endif
