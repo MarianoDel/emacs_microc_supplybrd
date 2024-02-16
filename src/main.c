@@ -1,5 +1,5 @@
 //---------------------------------------------------------------
-// #### PROJECT MICRO-CURRENTS POWER-OUT F103 - Custom Board ####
+// #### PROJECT MICRO-CURRENTS SUPPLY-BRD F103 - Custom Board ###
 // ##
 // ## @Author: Med
 // ## @Editor: Emacs - ggtags
@@ -20,6 +20,7 @@
 #include "gpio.h"
 #include "usart_channels.h"
 #include "usart.h"
+#include "i2c.h"
 
 #include "comms.h"
 #include "test_functions.h"
@@ -90,6 +91,15 @@ int main (void)
     // //-- TIM1 for signals module sequence ready
     // TIM6_Init();
     // TIM7_Init();
+    //-- Reboot Encoders Board
+    ENA_ENCODER_OFF;
+    Wait_ms(300);
+    ENA_ENCODER_ON;
+    //-- Comms with encoders board
+    I2C1_Init();
+    I2C1_OwnAddress (0x44);
+    I2C1_Ack (1);
+    
     //-- Starts with all channels disabled
     Ena_Ch1_Off();
     Ena_Ch2_Off();
@@ -125,6 +135,45 @@ int main (void)
             UsartChannel2ReadBuffer(buff, 128);
             sprintf(buff_tx,"ch2 %s\n", buff);
             UsartRpiSend(buff_tx);
+        }
+
+        // rx from I2C
+        if (I2C1->SR1 & I2C_SR1_ADDR)
+        {
+            char * pb = buff;
+            unsigned char len = 0;
+            unsigned char end_rx = 1;
+            unsigned short dummy = 0;
+
+            dummy = I2C1->SR2;
+            dummy++;
+            
+            timer_standby = 5;
+            do {
+                if (I2C1->SR1 & I2C_SR1_RXNE)
+                {
+                    *pb = I2C1->DR;
+                    pb++;
+                    len++;
+                }
+
+                if (I2C1->SR1 & I2C_SR1_STOPF)
+                {
+                    // I2C1->CR1 &= ~I2C_CR1_STOP;                    
+                    end_rx = 0;
+                }
+
+                if (!timer_standby)
+                    end_rx = 0;
+                
+            } while (end_rx);
+
+            // free lines on slave
+            I2C1->CR1 |= I2C_CR1_STOP;
+            buff[len] = '\n';
+            buff[len+1] = '\0';
+            UsartRpiSend(buff);
+            I2C1->CR1 &= ~I2C_CR1_STOP;
         }
     }
 }

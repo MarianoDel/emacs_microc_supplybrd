@@ -70,6 +70,7 @@ SRC += ./src/usart.c
 SRC += ./src/tim.c
 SRC += ./src/dma.c
 SRC += ./src/hard.c
+SRC += ./src/i2c.c
 # SRC += ./src/dac.c
 
 # SRC += ./src/dsp.c
