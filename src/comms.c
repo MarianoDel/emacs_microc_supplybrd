@@ -16,6 +16,8 @@
 #include "usart_channels.h"
 #include "usart.h"
 
+#include "i2c_driver.h"
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -143,6 +145,23 @@ static void Comms_Messages (char * msg_str)
             // UsartChannel4Send (buff);            
         }
     }
+
+    else if (strncmp (msg_str, "encod", sizeof("encod") - 1) == 0)
+    {
+        char * pmsg = msg_str + sizeof("encod") - 1;
+        
+        // check enable if valid number
+        if ((*pmsg >= '0') && (*pmsg <= '7'))
+        {
+            if ((*(pmsg + 1) == ' ') &&
+                (*(pmsg + 2) >= '0') &&
+                (*(pmsg + 2) <= '9'))
+            {
+                i2c_driver_set_encod (*pmsg - '0', *(pmsg + 2) - '0');
+            }
+        }
+    }
+
     else if (strncmp (msg_str, "sup", sizeof("sup") - 1) == 0)
     {
         // not implemented yet!

@@ -78,6 +78,30 @@ void Ena_Ch4_Off (void)
 }
 
 
+void Act_Probe_Ch1_Off (void)
+{
+    ACT_PROBE_CH1_OFF;
+}
+
+
+void Act_Probe_Ch2_Off (void)
+{
+    ACT_PROBE_CH2_OFF;
+}
+
+
+void Act_Probe_Ch1_On (void)
+{
+    ACT_PROBE_CH1_ON;
+}
+
+
+void Act_Probe_Ch2_On (void)
+{
+    ACT_PROBE_CH2_ON;
+}
+
+
 void Hard_GetHardSoft (char * buff)
 {
     sprintf(buff, "%s %s\n", HARD, SOFT);

@@ -24,7 +24,7 @@
 
 #include "comms.h"
 #include "test_functions.h"
-
+#include "i2c_driver.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -37,6 +37,8 @@
 //--- Externals from timers
 volatile unsigned short timer_standby = 0;
 volatile unsigned short wait_ms_var = 0;
+volatile unsigned char probe_detect_timer = 0;
+volatile unsigned short probe_detect_filter = 0;
 
 //--- Externals from adc
 volatile unsigned short adc_ch [ADC_CHANNEL_QUANTITY];
@@ -53,6 +55,8 @@ volatile unsigned short adc_ch [ADC_CHANNEL_QUANTITY];
 // Module Private Functions ----------------------------------------------------
 void TimingDelay_Decrement(void);
 void SysTickError (void);
+unsigned char Probe_Detect_Ch1 (void);
+void Probe_Detect_Update (void);
 
 
 
@@ -111,6 +115,11 @@ int main (void)
     UsartChannel1Config ();
     UsartChannel2Config ();
 
+    //-- Enable 5V to comms in channels
+    Act_Probe_Ch1_On ();
+    Act_Probe_Ch2_On ();
+    
+
     char buff [120];
     char buff_tx [128];            
     
@@ -138,43 +147,17 @@ int main (void)
         }
 
         // rx from I2C
-        if (I2C1->SR1 & I2C_SR1_ADDR)
-        {
-            char * pb = buff;
-            unsigned char len = 0;
-            unsigned char end_rx = 1;
-            unsigned short dummy = 0;
+        i2c_driver_update ();
+        
+        // enable channel on probe detection
+        Probe_Detect_Update ();
 
-            dummy = I2C1->SR2;
-            dummy++;
-            
-            timer_standby = 5;
-            do {
-                if (I2C1->SR1 & I2C_SR1_RXNE)
-                {
-                    *pb = I2C1->DR;
-                    pb++;
-                    len++;
-                }
-
-                if (I2C1->SR1 & I2C_SR1_STOPF)
-                {
-                    // I2C1->CR1 &= ~I2C_CR1_STOP;                    
-                    end_rx = 0;
-                }
-
-                if (!timer_standby)
-                    end_rx = 0;
-                
-            } while (end_rx);
-
-            // free lines on slave
-            I2C1->CR1 |= I2C_CR1_STOP;
-            buff[len] = '\n';
-            buff[len+1] = '\0';
-            UsartRpiSend(buff);
-            I2C1->CR1 &= ~I2C_CR1_STOP;
-        }
+        // check ch1 enable
+        if (Probe_Detect_Ch1 ())
+            Ena_Ch1_On();
+        else
+            Ena_Ch1_Off();
+        
     }
 }
 
@@ -182,6 +165,33 @@ int main (void)
 
 
 // Other Module Functions ------------------------------------------------------
+unsigned char Probe_Detect_Ch1 (void)
+{
+    if (probe_detect_filter > 60)
+        return 1;
+
+    return 0;
+}
+
+
+void Probe_Detect_Update (void)
+{
+    if (!probe_detect_timer)
+    {
+        probe_detect_timer = 1;
+
+        if (PROBE_SENSE_CH1)
+        {
+            if (probe_detect_filter < 200)
+                probe_detect_filter += 20;
+        }
+        else
+        {
+            if (probe_detect_filter)
+                probe_detect_filter--;
+        }
+    }
+}
 // extern void TF_Prot_Int_Handler (unsigned char ch);
 // void EXTI2_IRQHandler (void)
 // {
@@ -230,6 +240,11 @@ void TimingDelay_Decrement(void)
     if (timer_standby)
         timer_standby--;
 
+    if (probe_detect_timer)
+        probe_detect_timer--;
+
+    i2c_driver_timeouts ();
+    
 // AntennaTimeouts ();
 
     // Treatment_Timeouts ();
