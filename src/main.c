@@ -118,8 +118,15 @@ int main (void)
     //-- Enable 5V to comms in channels
     Act_Probe_Ch1_On ();
     Act_Probe_Ch2_On ();
-    
 
+    // for (int i = 0; i < 10; i++)
+    // {
+    //     Wait_ms(1);
+    //     SYNC_CH1_ON;
+    //     Wait_ms(1);
+    //     SYNC_CH1_OFF;
+    // }
+    
     char buff [120];
     char buff_tx [128];            
     
