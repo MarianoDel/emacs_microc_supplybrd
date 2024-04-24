@@ -155,7 +155,7 @@ static void Comms_Messages (char * msg_str)
         {
             if ((*(pmsg + 1) == ' ') &&
                 (*(pmsg + 2) >= '0') &&
-                (*(pmsg + 2) <= '9'))
+                (*(pmsg + 2) <= ';'))
             {
                 i2c_driver_set_encod (*pmsg - '0', *(pmsg + 2) - '0');
             }

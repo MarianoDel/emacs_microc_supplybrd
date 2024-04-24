@@ -95,7 +95,7 @@ void i2c_driver_update (void)
 }
 
 
-unsigned char dummy_vec [8] = { 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F, 0xFF };
+// unsigned char dummy_vec [8] = { 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F, 0xFF };
 void i2c_send_eight (unsigned char * tt)
 {
     unsigned char loop_data = 0;
@@ -105,9 +105,9 @@ void i2c_send_eight (unsigned char * tt)
     {
         // reset ack fail
         I2C1->SR1 &= ~I2C_SR1_AF;
-        // I2C1->DR = encoder_data[loop_data];
+        I2C1->DR = encoder_data[loop_data];
         // I2C1->DR = 0x55;
-        I2C1->DR = dummy_vec[loop_data];
+        // I2C1->DR = dummy_vec[loop_data];
         
         if (loop_data < 8)
             loop_data++;
