@@ -79,7 +79,7 @@ SRC += ./src/utils.c
 SRC += ./src/test_functions.c
 SRC += ./src/i2c_driver.c
 
-# SRC += ./src/comms_channels.c
+SRC += ./src/battery.c
 # SRC += ./src/antennas.c
 # SRC += ./src/signals.c
 # SRC += ./src/errors.c

@@ -34,7 +34,7 @@
 
 
 // Externals -------------------------------------------------------------------
-extern volatile unsigned short adc_ch [];
+// extern volatile unsigned short adc_ch [];
 
 
 #ifdef ADC_WITH_INT
@@ -99,27 +99,33 @@ void AdcConfig (void)
     // ADC1->CR2 |= ADC_CR2_CONT | ADC_CR2_EXTTRIG;    // with external trigger (can be soft trigger)
 
     // converts all channels in sequence and stops
-    ADC1->CR1 |= ADC_CR1_SCAN;
-    ADC1->CR2 |= ADC_CR2_EXTTRIG;    // with external trigger (can be soft trigger)    
+    // ADC1->CR1 |= ADC_CR1_SCAN;
+    // ADC1->CR2 |= ADC_CR2_EXTTRIG;    // with external trigger (can be soft trigger)    
     
+    // //set sampling time for each channel
+    // AdcSetChannelSampleTime(ADC_Channel_0, ADC_SampleTime_41_5Cycles);
+    // AdcSetChannelSampleTime(ADC_Channel_1, ADC_SampleTime_41_5Cycles);
+    // AdcSetChannelSampleTime(ADC_Channel_2, ADC_SampleTime_41_5Cycles);
+    // AdcSetChannelSampleTime(ADC_Channel_3, ADC_SampleTime_41_5Cycles);    
+    // AdcSetChannelSampleTime(ADC_Channel_6, ADC_SampleTime_41_5Cycles);
+    // AdcSetChannelSampleTime(ADC_Channel_7, ADC_SampleTime_41_5Cycles);
+
+    // //set regular channel selection, start with 1
+    // AdcSetChannelSamplePosition(ADC_Channel_0, 1);
+    // AdcSetChannelSamplePosition(ADC_Channel_1, 2);
+    // AdcSetChannelSamplePosition(ADC_Channel_2, 3);
+    // AdcSetChannelSamplePosition(ADC_Channel_3, 4);
+    // AdcSetChannelSamplePosition(ADC_Channel_6, 5);    
+    // AdcSetChannelSamplePosition(ADC_Channel_7, 6);
+
+    // //set the quantity of channels to convert
+    // AdcSetChannelsQuantity(ADC_Channels_Qtty_6);
+
     //set sampling time for each channel
-    AdcSetChannelSampleTime(ADC_Channel_0, ADC_SampleTime_41_5Cycles);
-    AdcSetChannelSampleTime(ADC_Channel_1, ADC_SampleTime_41_5Cycles);
-    AdcSetChannelSampleTime(ADC_Channel_2, ADC_SampleTime_41_5Cycles);
-    AdcSetChannelSampleTime(ADC_Channel_3, ADC_SampleTime_41_5Cycles);    
-    AdcSetChannelSampleTime(ADC_Channel_6, ADC_SampleTime_41_5Cycles);
-    AdcSetChannelSampleTime(ADC_Channel_7, ADC_SampleTime_41_5Cycles);
-
-    //set regular channel selection, start with 1
-    AdcSetChannelSamplePosition(ADC_Channel_0, 1);
-    AdcSetChannelSamplePosition(ADC_Channel_1, 2);
-    AdcSetChannelSamplePosition(ADC_Channel_2, 3);
-    AdcSetChannelSamplePosition(ADC_Channel_3, 4);
-    AdcSetChannelSamplePosition(ADC_Channel_6, 5);    
-    AdcSetChannelSamplePosition(ADC_Channel_7, 6);
-
-    //set the quantity of channels to convert
-    AdcSetChannelsQuantity(ADC_Channels_Qtty_6);
+    AdcSetChannelSampleTime(ADC_Channel_4, ADC_SampleTime_239_5Cycles);
+    AdcSetChannelSampleTime(ADC_Channel_5, ADC_SampleTime_239_5Cycles);
+    AdcSetChannelSampleTime(ADC_Channel_6, ADC_SampleTime_239_5Cycles);
+    
     
 #ifdef ADC_WITH_INT        
     //set interrupts
@@ -358,6 +364,10 @@ unsigned char AdcConvertSingleChannelFinishFlag (void)
     return (ADC1->SR & ADC_SR_EOC);
 }
 
+unsigned short AdcConvertChannelResult (void)
+{
+    return ADC1->DR;
+}
 
 //--- end of file ---//
 

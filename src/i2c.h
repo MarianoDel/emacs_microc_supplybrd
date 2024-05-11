@@ -18,6 +18,7 @@
 
 // Module Exported Functions ---------------------------------------------------
 void I2C1_Init (void);
+void I2C1_Shutdown (void);
 void I2C1_OwnAddress (unsigned char own_addr);
 void I2C1_Ack (unsigned char set_reset);
 void I2C1_SendByte (unsigned char addr, unsigned char data);

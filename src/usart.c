@@ -153,6 +153,19 @@ void Usart1Config(void)
 }
 
 
+void Usart1Shutdown(void)
+{
+    // stop INTs
+    USART1->CR1 &= ~(USART_CR1_RXNEIE | USART_CR1_TXEIE);
+    // stop RE & TE
+    USART1->CR1 &= ~(USART_CR1_RE | USART_CR1_TE);
+    // stop USART
+    USART1->CR1 &= ~(USART_CR1_UE);
+
+    RCC_USART1_CLKDIS;
+}
+
+
 void Usart1Send (char * send)
 {
     unsigned char i;
@@ -301,6 +314,19 @@ void Usart2Config(void)
     //---- Habilito Int y prioridad ----
     NVIC_EnableIRQ(USART2_IRQn);
     NVIC_SetPriority(USART2_IRQn, 7);
+}
+
+
+void Usart2Shutdown(void)
+{
+    // stop INTs
+    USART2->CR1 &= ~(USART_CR1_RXNEIE | USART_CR1_TXEIE);
+    // stop RE & TE
+    USART2->CR1 &= ~(USART_CR1_RE | USART_CR1_TE);
+    // stop USART
+    USART2->CR1 &= ~(USART_CR1_UE);
+    
+    RCC_USART2_CLKDIS;
 }
 
 
@@ -462,6 +488,19 @@ void Usart3Config(void)
 }
 
 
+void Usart3Shutdown(void)
+{
+    // stop INTs
+    USART3->CR1 &= ~(USART_CR1_RXNEIE | USART_CR1_TXEIE);
+    // stop RE & TE
+    USART3->CR1 &= ~(USART_CR1_RE | USART_CR1_TE);
+    // stop USART
+    USART3->CR1 &= ~(USART_CR1_UE);
+    
+    RCC_USART3_CLKDIS;
+}
+
+
 void Usart3Send (char * send)
 {
     unsigned char i;
@@ -606,6 +645,21 @@ void Uart4Config(void)
     NVIC_EnableIRQ(UART4_IRQn);
     NVIC_SetPriority(UART4_IRQn, 7);
 }
+
+
+void Uart4Shutdown(void)
+{
+    // stop INTs
+    UART4->CR1 &= ~(USART_CR1_RXNEIE | USART_CR1_TXEIE);
+    // stop RE & TE
+    UART4->CR1 &= ~(USART_CR1_RE | USART_CR1_TE);
+    // stop USART
+    UART4->CR1 &= ~(USART_CR1_UE);
+    
+    RCC_UART4_CLKDIS;
+
+}
+
 
 void Uart4Send (char * send)
 {
@@ -752,6 +806,20 @@ void Uart5Config(void)
     //---- Habilito Int y prioridad ----
     NVIC_EnableIRQ(UART5_IRQn);
     NVIC_SetPriority(UART5_IRQn, 7);
+}
+
+
+void Uart5Shutdown(void)
+{
+    // stop INTs
+    UART5->CR1 &= ~(USART_CR1_RXNEIE | USART_CR1_TXEIE);
+    // stop RE & TE
+    UART5->CR1 &= ~(USART_CR1_RE | USART_CR1_TE);
+    // stop USART
+    UART5->CR1 &= ~(USART_CR1_UE);
+    
+    RCC_UART5_CLKDIS;
+
 }
 
 

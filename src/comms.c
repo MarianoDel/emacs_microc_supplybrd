@@ -117,6 +117,44 @@ static void Comms_Messages (char * msg_str)
             UsartChannel2Send (buff);
         }
     }
+    else if (strncmp (msg_str, "ch3", sizeof("ch3") - 1) == 0)
+    {
+        // check enable or bridged
+        if (strncmp ((msg_str + 4), "enable", sizeof("enable") - 1) == 0)
+        {
+            Ena_Ch3_On();
+            UsartRpiSend(s_ans_ok);
+        }
+        else if (strncmp ((msg_str + 4), "disable", sizeof("disable") - 1) == 0)
+        {
+            Ena_Ch3_Off();
+            UsartRpiSend(s_ans_ok);
+        }
+        else    // bridge the message
+        {
+            sprintf(buff, "%s\n", (msg_str + 4));
+            UsartChannel3Send (buff);
+        }
+    }
+    else if (strncmp (msg_str, "ch4", sizeof("ch4") - 1) == 0)
+    {
+        // check enable or bridged
+        if (strncmp ((msg_str + 4), "enable", sizeof("enable") - 1) == 0)
+        {
+            Ena_Ch4_On();
+            UsartRpiSend(s_ans_ok);
+        }
+        else if (strncmp ((msg_str + 4), "disable", sizeof("disable") - 1) == 0)
+        {
+            Ena_Ch4_Off();
+            UsartRpiSend(s_ans_ok);
+        }
+        else    // bridge the message
+        {
+            sprintf(buff, "%s\n", (msg_str + 4));
+            UsartChannel4Send (buff);
+        }
+    }
     else if (strncmp (msg_str, "chf", sizeof("chf") - 1) == 0)
     {
         // check enable or bridged
@@ -141,8 +179,8 @@ static void Comms_Messages (char * msg_str)
             sprintf(buff, "%s\n", (msg_str + 4));
             UsartChannel1Send (buff);
             UsartChannel2Send (buff);
-            // UsartChannel3Send (buff);
-            // UsartChannel4Send (buff);            
+            UsartChannel3Send (buff);
+            UsartChannel4Send (buff);            
         }
     }
 
@@ -160,6 +198,9 @@ static void Comms_Messages (char * msg_str)
                 i2c_driver_set_encod (*pmsg - '0', *(pmsg + 2) - '0');
             }
         }
+
+        // rpi connected!
+        i2c_driver_set_encod (8, 0x01);
     }
 
     else if (strncmp (msg_str, "sup", sizeof("sup") - 1) == 0)

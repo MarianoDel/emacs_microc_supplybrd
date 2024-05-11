@@ -25,13 +25,21 @@
 #include "comms.h"
 #include "test_functions.h"
 #include "i2c_driver.h"
+#include "battery.h"
 
 #include <stdio.h>
 #include <string.h>
 
 
 // Private Types Constants and Macros ------------------------------------------
-
+typedef enum {
+    INIT,
+    MAINS_SUPPLY,
+    BATTERY_GOOD,
+    BATTERY_LOW
+    
+    
+} supply_states_e;
 
 // Externals -------------------------------------------------------------------
 //--- Externals from timers
@@ -57,7 +65,9 @@ void TimingDelay_Decrement(void);
 void SysTickError (void);
 unsigned char Probe_Detect_Ch1 (void);
 void Probe_Detect_Update (void);
-
+void Starts_Everything (void);
+void Shutdown_Everything (void);
+void Full_Working_Loop (void);
 
 
 // Module Functions ------------------------------------------------------------
@@ -74,31 +84,203 @@ int main (void)
     // TF_Hardware_Tests ();
 
     // --- main program inits. ---
-    // //-- DMA configuration.
-    // DMAConfig();
-    // DMA_ENABLE;
     
-    // //-- ADC with DMA
-    // AdcConfig();
-    // // ADC_START;
-
-    // //-- DAC init for signal generation
-    // DAC_Config ();
-    // DAC_Output1(1400);
+    //-- ADC without DMA
+    AdcConfig();
     
-    // //-- Comms with rasp
-    // Usart1Config ();
 
-    // //-- Comms with probes
-    // // Usart3Config ();
+    // for (int i = 0; i < 10; i++)
+    // {
+    //     Wait_ms(1);
+    //     SYNC_CH1_ON;
+    //     Wait_ms(1);
+    //     SYNC_CH1_OFF;
+    // }
+    
+    supply_states_e supply_state = INIT;
+    battery_status_e mains_status = STATUS_UNKNOWN;
+        
+    //-- Main Loop --------------------------
+    while (1)
+    {
+        switch (supply_state)
+        {
+        case INIT:
+            // check state every 200ms
+            if (!timer_standby)
+            {
+                timer_standby = 200;
+                mains_status = Battery_Check ();
+                
+                if (mains_status == RUNNING_ON_MAINS)
+                {
+                    // start everything
+                    Starts_Everything ();
+                    supply_state = MAINS_SUPPLY;
+                }
+                else if (mains_status == RUNNING_ON_BATTERY)
+                {
+                    // check battery voltage
+                    if ((Battery_Check_BatA () > BATTERY_CONNECT_VOLTAGE) ||
+                        (Battery_Check_BatB () > BATTERY_CONNECT_VOLTAGE))
+                    {
+                        // running on good bat, start everything
+                        Starts_Everything ();
+                        supply_state = BATTERY_GOOD;
+                    }
+                    else
+                    {
+                        // low batt
+                        Shutdown_Everything ();
+                        supply_state = BATTERY_LOW;
+                    }
+                }
+            }
+            break;
 
-    // //-- TIM1 for signals module sequence ready
-    // TIM6_Init();
-    // TIM7_Init();
+        case MAINS_SUPPLY:
+            Full_Working_Loop ();
+
+            if (!timer_standby)
+            {
+                timer_standby = 200;
+
+                mains_status = Battery_Check ();
+                
+                if (mains_status == RUNNING_ON_BATTERY)
+                    supply_state = BATTERY_GOOD;
+            }            
+            break;
+
+        case BATTERY_GOOD:
+            Full_Working_Loop ();
+
+            if (!timer_standby)
+            {
+                timer_standby = 200;
+
+                mains_status = Battery_Check ();
+                
+                if (mains_status == RUNNING_ON_MAINS)
+                    supply_state = MAINS_SUPPLY;
+
+                // check battery voltage
+                if ((Battery_Check_BatA () < BATTERY_DISCONNECT_VOLTAGE) &&
+                    (Battery_Check_BatB () < BATTERY_DISCONNECT_VOLTAGE))
+                {
+                    // low batt
+                    Shutdown_Everything ();
+                    supply_state = BATTERY_LOW;
+                }
+            }                        
+            break;
+
+        case BATTERY_LOW:
+            if (!timer_standby)
+            {
+                timer_standby = 1000;
+
+                mains_status = Battery_Check ();
+                
+                if (mains_status == RUNNING_ON_MAINS)
+                {
+                    // mains connection re-stablish
+                    // start everything
+                    Starts_Everything ();
+                    supply_state = MAINS_SUPPLY;
+                }
+
+                // check battery voltage
+                if ((Battery_Check_BatA () > BATTERY_CONNECT_VOLTAGE) ||
+                    (Battery_Check_BatB () > BATTERY_CONNECT_VOLTAGE))
+                {
+                    // battery charged externally???
+                    // running on good bat, start everything
+                    Starts_Everything ();
+                    supply_state = BATTERY_GOOD;
+                }
+            }            
+            break;
+        }
+
+
+        // Always check battery status
+        Battery_Status ();
+    }
+}
+
+//--- End of Main ---//
+
+
+// Other Module Functions ------------------------------------------------------
+#define SIZE_BUFFRX    124
+void Full_Working_Loop (void)
+{
+    char buff [SIZE_BUFFRX];
+    char buff_tx [128];
+
+    // update the channels & rpi comms
+    Comms_Update ();
+
+    // channels bridge
+    if (UsartChannel1HaveData())
+    {
+        UsartChannel1HaveDataReset();
+        UsartChannel1ReadBuffer(buff, SIZE_BUFFRX);
+        sprintf(buff_tx,"ch1 %s\n", buff);
+        UsartRpiSend(buff_tx);
+    }
+
+    if (UsartChannel2HaveData())
+    {
+        UsartChannel2HaveDataReset();
+        UsartChannel2ReadBuffer(buff, SIZE_BUFFRX);
+        sprintf(buff_tx,"ch2 %s\n", buff);
+        UsartRpiSend(buff_tx);
+    }
+
+    if (UsartChannel3HaveData())
+    {
+        UsartChannel3HaveDataReset();
+        UsartChannel3ReadBuffer(buff, SIZE_BUFFRX);
+        sprintf(buff_tx,"ch3 %s\n", buff);
+        UsartRpiSend(buff_tx);
+    }
+
+    if (UsartChannel4HaveData())
+    {
+        UsartChannel4HaveDataReset();
+        UsartChannel4ReadBuffer(buff, SIZE_BUFFRX);
+        sprintf(buff_tx,"ch4 %s\n", buff);
+        UsartRpiSend(buff_tx);
+    }
+    
+    // rx from I2C
+    i2c_driver_update ();
+        
+    // enable channel on probe detection
+    Probe_Detect_Update ();
+
+    // channels enable and disable by interface
+    // check ch1 enable
+    // if (Probe_Detect_Ch1 ())
+    //     Ena_Ch1_On();
+    // else
+    //     Ena_Ch1_Off();
+    
+}
+
+
+void Starts_Everything (void)
+{
+    //-- Enable Boost Supply
+    ENA_BOOST_ON;
+    
     //-- Reboot Encoders Board
     ENA_ENCODER_OFF;
     Wait_ms(300);
     ENA_ENCODER_ON;
+
     //-- Comms with encoders board
     I2C1_Init();
     I2C1_OwnAddress (0x44);
@@ -114,64 +296,56 @@ int main (void)
     UsartRpiConfig ();
     UsartChannel1Config ();
     UsartChannel2Config ();
+    UsartChannel3Config ();
+    UsartChannel4Config ();
 
+    //-- Enable 5V COMM supply
+    ENA_5V_COMM_ON;
+    
     //-- Enable 5V to comms in channels
     Act_Probe_Ch1_On ();
     Act_Probe_Ch2_On ();
-
-    // for (int i = 0; i < 10; i++)
-    // {
-    //     Wait_ms(1);
-    //     SYNC_CH1_ON;
-    //     Wait_ms(1);
-    //     SYNC_CH1_OFF;
-    // }
-    
-    char buff [120];
-    char buff_tx [128];            
-    
-    //-- Main Loop --------------------------
-    while (1)
-    {
-        // update the channels & rpi comms
-        Comms_Update ();
-
-        // channels bridge
-        if (UsartChannel1HaveData())
-        {
-            UsartChannel1HaveDataReset();
-            UsartChannel1ReadBuffer(buff, 128);
-            sprintf(buff_tx,"ch1 %s\n", buff);
-            UsartRpiSend(buff_tx);
-        }
-
-        if (UsartChannel2HaveData())
-        {
-            UsartChannel2HaveDataReset();
-            UsartChannel2ReadBuffer(buff, 128);
-            sprintf(buff_tx,"ch2 %s\n", buff);
-            UsartRpiSend(buff_tx);
-        }
-
-        // rx from I2C
-        i2c_driver_update ();
-        
-        // enable channel on probe detection
-        Probe_Detect_Update ();
-
-        // check ch1 enable
-        if (Probe_Detect_Ch1 ())
-            Ena_Ch1_On();
-        else
-            Ena_Ch1_Off();
-        
-    }
+    Act_Probe_Ch3_On ();
+    Act_Probe_Ch4_On ();    
 }
 
-//--- End of Main ---//
+
+void Shutdown_Everything (void)
+{
+    //-- Shutdown Encoders Board
+    ENA_ENCODER_OFF;
+
+    //-- Comms with encoders board
+    I2C1_Shutdown ();
+    
+    //-- All channels disabled
+    Ena_Ch1_Off();
+    Ena_Ch2_Off();
+    Ena_Ch3_Off();
+    Ena_Ch4_Off();
+
+    //-- Comms with rasp & channels
+    UsartRpiShutdown ();
+    UsartChannel1Shutdownn ();
+    UsartChannel2Shutdownn ();
+    UsartChannel3Shutdownn ();
+    UsartChannel4Shutdownn ();    
+
+    //-- Disable 5V to comms in channels
+    Act_Probe_Ch1_Off ();
+    Act_Probe_Ch2_Off ();
+    Act_Probe_Ch3_Off ();
+    Act_Probe_Ch4_Off ();
+
+    //-- Disable 5V COMM supply
+    ENA_5V_COMM_OFF;
+
+    //-- Disable Boost Supply
+    ENA_BOOST_OFF;
+    
+}
 
 
-// Other Module Functions ------------------------------------------------------
 unsigned char Probe_Detect_Ch1 (void)
 {
     if (probe_detect_filter > 60)
@@ -252,12 +426,7 @@ void TimingDelay_Decrement(void)
 
     i2c_driver_timeouts ();
     
-// AntennaTimeouts ();
-
-    // Treatment_Timeouts ();
-    
-    // HARD_Timeouts();
-    
+    Battery_Timeout ();
 }
 
 

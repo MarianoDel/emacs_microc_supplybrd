@@ -44,6 +44,7 @@ void TF_Enable_Rpi (void);
 void TF_Enable_Encoder (void);
 void TF_Enable_Boost (void);
 
+
 void TF_UsartChannel1_Loop (void);
 void TF_UsartChannel2_Loop (void);
 void TF_UsartChannel3_Loop (void);
@@ -63,7 +64,7 @@ void TF_Hardware_Tests (void)
     // TF_Act_Channels ();
     // TF_Enable_Channels ();
     // TF_Synchro_Channels ();
-    // TF_Enable_5V_Comm ();
+    TF_Enable_5V_Comm ();
     // TF_Enable_Lcd ();
     // TF_Enable_Rpi ();
     // TF_Enable_Encoder ();
@@ -77,7 +78,7 @@ void TF_Hardware_Tests (void)
     // TF_UsartRpi_Loop ();
     // TF_UsartRpi_String ();
 
-    TF_PowerOn_Channel1_Channel2 ();
+    // TF_PowerOn_Channel1_Channel2 ();
 
     // TF_Adc_Usart1_Tx ();
     // TF_Adc_Usart1_Voltages ();
@@ -161,16 +162,14 @@ void TF_Enable_5V_Comm (void)
 {
     while (1)
     {
-        Wait_ms(1000);
+        ENA_5V_COMM_ON;
+        Wait_ms(5000);
+        Act_Probe_Ch1_On();
+        Wait_ms(15000);
+        ENA_5V_COMM_OFF;
+        Act_Probe_Ch1_Off();
+        Wait_ms(20000);
 
-        if (ENA_5V_COMM)
-        {
-            ENA_5V_COMM_OFF;
-        }
-        else
-        {
-            ENA_5V_COMM_ON;
-        }
     }
 }
 

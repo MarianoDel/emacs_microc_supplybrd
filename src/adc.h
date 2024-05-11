@@ -94,6 +94,8 @@ void AdcSetChannelSamplePosition (unsigned char, unsigned char);
 void AdcSetChannelsQuantity (unsigned int);
 void AdcConvertChannel (unsigned char);
 unsigned char AdcConvertSingleChannelFinishFlag (void);
+unsigned short AdcConvertChannelResult (void);
+
 
 #ifdef ADC_WITH_TEMP_SENSE
 void UpdateTemp(void);

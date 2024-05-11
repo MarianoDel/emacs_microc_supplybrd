@@ -90,6 +90,18 @@ void Act_Probe_Ch2_Off (void)
 }
 
 
+void Act_Probe_Ch3_Off (void)
+{
+    ACT_PROBE_CH3_OFF;
+}
+
+
+void Act_Probe_Ch4_Off (void)
+{
+    ACT_PROBE_CH4_OFF;
+}
+
+
 void Act_Probe_Ch1_On (void)
 {
     ACT_PROBE_CH1_ON;
@@ -99,6 +111,18 @@ void Act_Probe_Ch1_On (void)
 void Act_Probe_Ch2_On (void)
 {
     ACT_PROBE_CH2_ON;
+}
+
+
+void Act_Probe_Ch3_On (void)
+{
+    ACT_PROBE_CH3_ON;
+}
+
+
+void Act_Probe_Ch4_On (void)
+{
+    ACT_PROBE_CH4_ON;
 }
 
 

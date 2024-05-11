@@ -21,13 +21,15 @@
 
 
 // Globals ---------------------------------------------------------------------
-unsigned char encoder_data [8] = { 0 };
+// unsigned char encoder_data [8] = { 0 };
+unsigned char encoder_data [10] = { 0 };
 volatile unsigned char i2c_driver_tt = 0;
 
 
 
 // Module Private Functions ----------------------------------------------------
 void i2c_send_eight (unsigned char * tt);
+void i2c_send_ten (unsigned char * tt);
 
 
 // Module Funtions -------------------------------------------------------------
@@ -56,7 +58,8 @@ void i2c_driver_update (void)
         i2c_driver_tt = 5;
         if (I2C1->SR1 & I2C_SR1_TXE)
         {
-            i2c_send_eight ((unsigned char *) &i2c_driver_tt);
+            // i2c_send_eight ((unsigned char *) &i2c_driver_tt);
+            i2c_send_ten ((unsigned char *) &i2c_driver_tt);            
             
             // free lines on slave
             I2C1->CR1 |= I2C_CR1_STOP;
@@ -110,6 +113,35 @@ void i2c_send_eight (unsigned char * tt)
         // I2C1->DR = dummy_vec[loop_data];
         
         if (loop_data < 8)
+            loop_data++;
+        else
+            loop_data = 0;
+
+        // wait for TxE or tt
+        while ((!(I2C1->SR1 & I2C_SR1_TXE)) &&
+               (*tt));
+
+        if ((I2C1->SR1 & I2C_SR1_AF) ||
+            (*tt == 0))
+            loop = 0;
+    }
+}
+
+
+void i2c_send_ten (unsigned char * tt)
+{
+    unsigned char loop_data = 0;
+    int loop = 1;
+    
+    while (loop)
+    {
+        // reset ack fail
+        I2C1->SR1 &= ~I2C_SR1_AF;
+        I2C1->DR = encoder_data[loop_data];
+        // I2C1->DR = 0x55;
+        // I2C1->DR = dummy_vec[loop_data];
+        
+        if (loop_data < 10)
             loop_data++;
         else
             loop_data = 0;

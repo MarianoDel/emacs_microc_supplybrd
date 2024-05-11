@@ -238,9 +238,13 @@ void Ena_Ch2_Off (void);
 void Ena_Ch3_Off (void);
 void Ena_Ch4_Off (void);
 
-void Act_Probe_Ch1_Off (void);
-void Act_Probe_Ch2_Off (void);
 void Act_Probe_Ch1_On (void);
 void Act_Probe_Ch2_On (void);
+void Act_Probe_Ch3_On (void);
+void Act_Probe_Ch4_On (void);
+void Act_Probe_Ch1_Off (void);
+void Act_Probe_Ch2_Off (void);
+void Act_Probe_Ch3_Off (void);
+void Act_Probe_Ch4_Off (void);
 
 #endif

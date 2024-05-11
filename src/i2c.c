@@ -100,6 +100,13 @@ void I2C1_Init (void)
 }
 
 
+void I2C1_Shutdown (void)
+{
+    // Clock for Peripheral
+    RCC_I2C1_CLKDIS;
+}
+
+
 void I2C1_OwnAddress (unsigned char own_addr)
 {
     I2C1->OAR1 = own_addr;
