@@ -44,6 +44,7 @@ typedef enum {
 // Externals -------------------------------------------------------------------
 //--- Externals from timers
 volatile unsigned short timer_standby = 0;
+volatile unsigned short timer_for_batt_report = 0;
 volatile unsigned short wait_ms_var = 0;
 volatile unsigned char probe_detect_timer = 0;
 volatile unsigned short probe_detect_filter = 0;
@@ -99,6 +100,7 @@ int main (void)
     
     supply_states_e supply_state = INIT;
     battery_status_e mains_status = STATUS_UNKNOWN;
+    char buff_report [100];
         
     //-- Main Loop --------------------------
     while (1)
@@ -121,8 +123,8 @@ int main (void)
                 else if (mains_status == RUNNING_ON_BATTERY)
                 {
                     // check battery voltage
-                    if ((Battery_Check_BatA () > BATTERY_CONNECT_VOLTAGE) ||
-                        (Battery_Check_BatB () > BATTERY_CONNECT_VOLTAGE))
+                    if ((Battery_Get_BatA () > BATTERY_CONNECT_VOLTAGE) ||
+                        (Battery_Get_BatB () > BATTERY_CONNECT_VOLTAGE))
                     {
                         // running on good bat, start everything
                         Starts_Everything ();
@@ -149,7 +151,46 @@ int main (void)
                 
                 if (mains_status == RUNNING_ON_BATTERY)
                     supply_state = BATTERY_GOOD;
-            }            
+            }
+
+            // send batteries voltage every five secs
+            if (!timer_for_batt_report)
+            {
+                unsigned char mains_int = 0;
+                unsigned char batta_int = 0;
+                unsigned char battb_int = 0;
+                unsigned char mains_dec = 0;
+                unsigned char batta_dec = 0;
+                unsigned char battb_dec = 0;
+                unsigned short adc_volts = 0;
+                char status_batta;
+                char status_battb;
+
+                timer_for_batt_report = 5000;
+
+                adc_volts = Battery_Get_Mains ();
+                Battery_Convert_To_Volts (adc_volts, &mains_int, &mains_dec);
+
+                adc_volts = Battery_Get_BatA ();
+                status_batta = Battery_Convert_Status_From_Adc (adc_volts);
+                Battery_Convert_To_Volts (adc_volts, &batta_int, &batta_dec);
+
+                adc_volts = Battery_Get_BatB ();
+                status_battb = Battery_Convert_Status_From_Adc (adc_volts);
+                Battery_Convert_To_Volts (adc_volts, &battb_int, &battb_dec);
+
+                sprintf(buff_report, "supply mains %d.%01dV %d.%01dV %d.%01dV %c %c\r\n",
+                        mains_int,
+                        mains_dec,
+                        batta_int,
+                        batta_dec,
+                        battb_int,
+                        battb_dec,
+                        status_batta,
+                        status_battb);
+
+                UsartRpiSend(buff_report);                
+            }
             break;
 
         case BATTERY_GOOD:
@@ -165,14 +206,17 @@ int main (void)
                     supply_state = MAINS_SUPPLY;
 
                 // check battery voltage
-                if ((Battery_Check_BatA () < BATTERY_DISCONNECT_VOLTAGE) &&
-                    (Battery_Check_BatB () < BATTERY_DISCONNECT_VOLTAGE))
+                if ((Battery_Get_BatA () < BATTERY_DISCONNECT_VOLTAGE) &&
+                    (Battery_Get_BatB () < BATTERY_DISCONNECT_VOLTAGE))
                 {
                     // low batt
                     Shutdown_Everything ();
                     supply_state = BATTERY_LOW;
                 }
-            }                        
+            }
+
+            // send batteries voltage every three secs
+            
             break;
 
         case BATTERY_LOW:
@@ -191,8 +235,8 @@ int main (void)
                 }
 
                 // check battery voltage
-                if ((Battery_Check_BatA () > BATTERY_CONNECT_VOLTAGE) ||
-                    (Battery_Check_BatB () > BATTERY_CONNECT_VOLTAGE))
+                if ((Battery_Get_BatA () > BATTERY_CONNECT_VOLTAGE) ||
+                    (Battery_Get_BatB () > BATTERY_CONNECT_VOLTAGE))
                 {
                     // battery charged externally???
                     // running on good bat, start everything
@@ -420,6 +464,9 @@ void TimingDelay_Decrement(void)
 
     if (timer_standby)
         timer_standby--;
+
+    if (timer_for_batt_report)
+        timer_for_batt_report--;    
 
     if (probe_detect_timer)
         probe_detect_timer--;

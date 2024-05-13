@@ -61,13 +61,19 @@ battery_status_e Battery_Check (void)
 }
 
 
-unsigned short Battery_Check_BatA (void)
+unsigned short Battery_Get_Mains (void)
+{
+    return mains_input_voltage;
+}
+
+
+unsigned short Battery_Get_BatA (void)
 {
     return batt_a_voltage;
 }
 
 
-unsigned short Battery_Check_BatB (void)
+unsigned short Battery_Get_BatB (void)
 {
     return batt_b_voltage;
 }
@@ -135,4 +141,34 @@ void Battery_Status (void)
 }
 
 
+void Battery_Convert_To_Volts (unsigned short adc_value,
+                               unsigned char * v_int,
+                               unsigned char * v_dec)
+{
+    // Rmult is 0.211
+    // Vx = adc * 3.3 
+    float fcalc = 1.0;
+
+    fcalc = adc_value * 15.64;
+    fcalc = fcalc / 4095.;
+
+    *v_int = (unsigned char) fcalc;
+    fcalc = fcalc - *v_int;
+    fcalc = fcalc * 10;
+    *v_dec = (unsigned char) fcalc;    
+}
+
+
+char Battery_Convert_Status_From_Adc (unsigned short adc_batt)
+{
+    char a = '1';
+    if (adc_batt > BATT_ADC_3)
+        a = '4';
+    else if (adc_batt > BATT_ADC_2)
+        a = '3';
+    else if (adc_batt > BATT_ADC_1)
+        a = '2';
+
+    return a;
+}
 //--- end of file ---//
