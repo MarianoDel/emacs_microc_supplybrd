@@ -14,17 +14,18 @@
 // Module Exported Types Constants and Macros ----------------------------------
 // inputs divider/multiplier 0.211
 #define MAINS_VOLTAGE_MIN    2625    // 10V
-// #define BATTERY_DISCONNECT_VOLTAGE    1701    // 6.5V
-// #define BATTERY_CONNECT_VOLTAGE    1832    // 7V
+#define BATTERY_DISCONNECT_VOLTAGE    1701    // 6.5V
+#define BATTERY_CONNECT_VOLTAGE    1832    // 7V
 
+#define BATT_ADC_0    1571    // 6.0V
 #define BATT_ADC_1    1780    // 6.8V
 #define BATT_ADC_2    1911    // 7.3V
 #define BATT_ADC_3    2042    // 7.8V
 #define BATT_ADC_4    2147    // 8.2V
 
 // for tests only
-#define BATTERY_DISCONNECT_VOLTAGE    1964    // 7.5V
-#define BATTERY_CONNECT_VOLTAGE    2094    // 8V
+// #define BATTERY_DISCONNECT_VOLTAGE    1964    // 7.5V
+// #define BATTERY_CONNECT_VOLTAGE    2094    // 8V
 
 typedef enum {
     STATUS_UNKNOWN,

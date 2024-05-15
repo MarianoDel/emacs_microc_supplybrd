@@ -150,6 +150,7 @@ void Battery_Convert_To_Volts (unsigned short adc_value,
     float fcalc = 1.0;
 
     fcalc = adc_value * 15.64;
+    // fcalc = adc_value * 15.08;    // adjust 8.1 -> 7.81
     fcalc = fcalc / 4095.;
 
     *v_int = (unsigned char) fcalc;
@@ -161,13 +162,16 @@ void Battery_Convert_To_Volts (unsigned short adc_value,
 
 char Battery_Convert_Status_From_Adc (unsigned short adc_batt)
 {
-    char a = '1';
+    char a = '0';
+    
     if (adc_batt > BATT_ADC_3)
         a = '4';
     else if (adc_batt > BATT_ADC_2)
         a = '3';
     else if (adc_batt > BATT_ADC_1)
         a = '2';
+    else if (adc_batt > BATT_ADC_0)
+        a = '1';
 
     return a;
 }

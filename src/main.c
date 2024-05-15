@@ -182,12 +182,12 @@ int main (void)
                 sprintf(buff_report, "supply mains %d.%01dV %d.%01dV %d.%01dV %c %c\r\n",
                         mains_int,
                         mains_dec,
-                        batta_int,
-                        batta_dec,
                         battb_int,
                         battb_dec,
-                        status_batta,
-                        status_battb);
+                        batta_int,
+                        batta_dec,
+                        status_battb,
+                        status_batta);
 
                 UsartRpiSend(buff_report);                
             }
@@ -215,8 +215,37 @@ int main (void)
                 }
             }
 
-            // send batteries voltage every three secs
-            
+            // send batteries voltage every five secs
+            if (!timer_for_batt_report)
+            {
+                unsigned char batta_int = 0;
+                unsigned char battb_int = 0;
+                unsigned char batta_dec = 0;
+                unsigned char battb_dec = 0;
+                unsigned short adc_volts = 0;
+                char status_batta;
+                char status_battb;
+
+                timer_for_batt_report = 5000;
+
+                adc_volts = Battery_Get_BatA ();
+                status_batta = Battery_Convert_Status_From_Adc (adc_volts);
+                Battery_Convert_To_Volts (adc_volts, &batta_int, &batta_dec);
+
+                adc_volts = Battery_Get_BatB ();
+                status_battb = Battery_Convert_Status_From_Adc (adc_volts);
+                Battery_Convert_To_Volts (adc_volts, &battb_int, &battb_dec);
+
+                sprintf(buff_report, "supply battery 0.0V %d.%01dV %d.%01dV %c %c\r\n",
+                        battb_int,
+                        battb_dec,
+                        batta_int,
+                        batta_dec,
+                        status_battb,
+                        status_batta);
+
+                UsartRpiSend(buff_report);                
+            }
             break;
 
         case BATTERY_LOW:
