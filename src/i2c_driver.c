@@ -14,6 +14,7 @@
 
 #include "hard.h"
 
+#include <string.h>
 // Private Types Constants and Macros ------------------------------------------
 
 
@@ -30,6 +31,7 @@ volatile unsigned char i2c_driver_tt = 0;
 // Module Private Functions ----------------------------------------------------
 void i2c_send_eight (unsigned char * tt);
 void i2c_send_ten (unsigned char * tt);
+void i2c_validate_encod_data (char * buff);
 
 
 // Module Funtions -------------------------------------------------------------
@@ -92,6 +94,7 @@ void i2c_driver_update (void)
         I2C1->CR1 |= I2C_CR1_STOP;
         buff[len] = '\n';
         buff[len+1] = '\0';
+        // i2c_validate_encod_data (buff);
         UsartRpiSend(buff);
         I2C1->CR1 &= ~I2C_CR1_STOP;
     }
@@ -160,5 +163,37 @@ void i2c_send_ten (unsigned char * tt)
 void i2c_driver_set_encod (unsigned char encoder_num, unsigned char encoder_pos)
 {
     encoder_data[encoder_num] = encoder_pos;
+}
+
+
+void i2c_validate_encod_data (char * buff)
+{
+    // enc 2 pos 1\n
+    // enc 2 pos 10\n
+    unsigned char len = strlen(buff);
+    if ((strncmp ((buff + 0), "enc ", sizeof("enc ") - 1) == 0) &&
+        (strncmp ((buff + 6), "pos ", sizeof("pos ") - 1) == 0))
+    {
+        char * penc = buff + sizeof("enc ") - 1;
+        char * ppos = buff + sizeof("enc 0 pos ") - 1;       
+        // check valid encoder number
+        if ((*penc >= '0') && (*penc <= '7') &&
+            (*ppos >= '0') && (*ppos <= '9'))
+        {
+            if (len == 12)    // one position digit
+            {
+                i2c_driver_set_encod (*penc - '0', *ppos - '0');
+            }
+            else if ((*(ppos + 1) >= '0') && (*(ppos + 1) <= '9'))
+            {
+                unsigned char posi;
+                posi = *ppos - '0';
+                posi = posi * 10;
+                posi = posi + *(ppos + 1) - '0';
+
+                i2c_driver_set_encod (*penc - '0', posi);
+            }
+        }
+    }
 }
 //--- end of file ---//
