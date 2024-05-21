@@ -349,8 +349,25 @@ void Starts_Everything (void)
     //-- Enable Boost Supply
     ENA_BOOST_ON;
     
-    //-- Reboot Encoders Board
+    //-- Starts with all channels disabled
+    Ena_Ch1_Off();
+    Ena_Ch2_Off();
+    Ena_Ch3_Off();
+    Ena_Ch4_Off();
+
+    //-- Shutdown RPi and Encoders Board
     ENA_ENCODER_OFF;
+    ENA_RPI_OFF;
+
+    //-- Boot on RPi
+    Wait_ms(300);
+    ENA_RPI_ON;
+
+    //-- Boot on LCD Display
+    Wait_ms(100);
+    ENA_LCD_ON;
+    
+    //-- Boot Encoders Board
     Wait_ms(300);
     ENA_ENCODER_ON;
 
@@ -358,12 +375,6 @@ void Starts_Everything (void)
     I2C1_Init();
     I2C1_OwnAddress (0x44);
     I2C1_Ack (1);
-    
-    //-- Starts with all channels disabled
-    Ena_Ch1_Off();
-    Ena_Ch2_Off();
-    Ena_Ch3_Off();
-    Ena_Ch4_Off();
 
     //-- Comms with rasp & channels
     UsartRpiConfig ();
@@ -402,7 +413,13 @@ void Shutdown_Everything (void)
     UsartChannel1Shutdownn ();
     UsartChannel2Shutdownn ();
     UsartChannel3Shutdownn ();
-    UsartChannel4Shutdownn ();    
+    UsartChannel4Shutdownn ();
+
+    //-- Lcd Display Shutdown
+    ENA_LCD_OFF;
+    
+    //-- RPi Shutdown
+    ENA_RPI_OFF;
 
     //-- Disable 5V to comms in channels
     Act_Probe_Ch1_Off ();
