@@ -15,6 +15,7 @@
 
 #include "usart_channels.h"
 #include "usart.h"
+#include "bit_bang.h"
 
 #include "i2c_driver.h"
 
@@ -74,7 +75,6 @@ void Comms_Update (void)
 
 static void Comms_Messages (char * msg_str)
 {
-    unsigned char rpi_conn = 0;
     char buff [128];    
     
     // check if its own, broadcast or channel
@@ -97,8 +97,6 @@ static void Comms_Messages (char * msg_str)
             sprintf(buff, "%s\n", (msg_str + 4));
             UsartChannel1Send (buff);
         }
-
-        rpi_conn = 1;
     }
     else if (strncmp (msg_str, "ch2", sizeof("ch2") - 1) == 0)
     {
@@ -118,8 +116,6 @@ static void Comms_Messages (char * msg_str)
             sprintf(buff, "%s\n", (msg_str + 4));
             UsartChannel2Send (buff);
         }
-        
-        rpi_conn = 1;        
     }
     else if (strncmp (msg_str, "ch3", sizeof("ch3") - 1) == 0)
     {
@@ -139,8 +135,6 @@ static void Comms_Messages (char * msg_str)
             sprintf(buff, "%s\n", (msg_str + 4));
             UsartChannel3Send (buff);
         }
-
-        rpi_conn = 1;        
     }
     else if (strncmp (msg_str, "ch4", sizeof("ch4") - 1) == 0)
     {
@@ -160,8 +154,6 @@ static void Comms_Messages (char * msg_str)
             sprintf(buff, "%s\n", (msg_str + 4));
             UsartChannel4Send (buff);
         }
-
-        rpi_conn = 1;        
     }
     else if (strncmp (msg_str, "chf", sizeof("chf") - 1) == 0)
     {
@@ -190,8 +182,6 @@ static void Comms_Messages (char * msg_str)
             UsartChannel3Send (buff);
             UsartChannel4Send (buff);            
         }
-        
-        rpi_conn = 1;        
     }
 
     else if (strncmp (msg_str, "encod", sizeof("encod") - 1) == 0)
@@ -205,27 +195,29 @@ static void Comms_Messages (char * msg_str)
                 (*(pmsg + 2) >= '0') &&
                 (*(pmsg + 2) <= ';'))
             {
-                i2c_driver_set_encod (*pmsg - '0', *(pmsg + 2) - '0');
+                char buff_encod [30] = { 0 };
+                // "enc 0 1\n"
+                sprintf(buff_encod, "enc %c %c\n", *(pmsg + 0), *(pmsg + 2));
+                Bit_Bang_Tx_Send(buff_encod);
+                // Bit_Bang_Tx_Send("enc 0 1\n");                
+                // i2c_driver_set_encod (*pmsg - '0', *(pmsg + 2) - '0');
             }
         }
-
-        rpi_conn = 1;
     }
-
+    
+    else if (strncmp (msg_str, "rpi is up", sizeof("rpi is up") - 1) == 0)
+    {
+        Bit_Bang_Tx_Send("rpi up\n");
+    }
+    
     else if (strncmp (msg_str, "sup", sizeof("sup") - 1) == 0)
     {
         // not implemented yet!
         UsartRpiSend(s_ans_ok);
-        rpi_conn = 1;        
     }
     else
         UsartRpiSend(s_ans_nok);
 
-    if (rpi_conn)
-    {
-        // rpi connected!
-        i2c_driver_set_encod (8, 0x01);        
-    }
 }
 
 

@@ -12,6 +12,7 @@
 #include "tim.h"
 #include "stm32f10x.h"
 #include "hard.h"
+#include "bit_bang.h"
 
 
 // Module Private Types Constants and Macros -----------------------------------
@@ -360,7 +361,7 @@ void TIM6_Init(void)
         RCC_TIM6_CLKEN;
 
     //--- Config ----//
-    TIM6->ARR = 1000;
+    TIM6->ARR = 833;
     TIM6->CNT = 0;
     TIM6->PSC = 63;
     TIM6->EGR = TIM_EGR_UG; //update registers
@@ -373,6 +374,20 @@ void TIM6_Init(void)
     NVIC_EnableIRQ(TIM6_IRQn);
     NVIC_SetPriority(TIM6_IRQn, 9);
 }
+
+
+void TIM6_Stop (void)
+{
+    TIM6->CR1 &= ~(TIM_CR1_CEN);
+    TIM6->CNT = 0;
+}
+
+
+void TIM6_Start (void)
+{
+    TIM6->CR1 |= TIM_CR1_CEN;
+}
+
 
 
 void TIM6_Change (unsigned short new_psc, unsigned short new_arr)
@@ -390,7 +405,8 @@ void TIM6_IRQHandler (void)
     if (TIM6->SR & TIM_SR_UIF)
         TIM6->SR = ~(TIM_SR_UIF);
 
-    TIM6_UIF_Set();
+    Bit_Bang_Tx_Tim_Handler ();
+    // timer_6_uif_flag = 1;
 }
 
 
@@ -412,10 +428,6 @@ void TIM6_UIF_Set (void)
 }
 
 
-void TIM6_Stop (void)
-{
-    TIM6->CR1 &= ~(TIM_CR1_CEN);
-}
 ///////////////////////
 // Timer 7 Functions //
 ///////////////////////
@@ -433,20 +445,31 @@ void TIM7_Init(void)
         RCC_TIM7_CLKEN;
 
     //--- Config ----//
-    TIM7->ARR = 1000;
-    //TIM7->ARR = 100;
+    TIM7->ARR = 416;
     TIM7->CNT = 0;
-    TIM7->PSC = 71;
+    TIM7->PSC = 63;
     TIM7->EGR = TIM_EGR_UG; //update registers
 
     // Enable timer ver UDIS
     TIM7->DIER |= TIM_DIER_UIE;
-    TIM7->CR1 |= TIM_CR1_CEN;
+    // TIM7->CR1 |= TIM_CR1_CEN;
 
-    //Habilito NVIC
-    //Interrupcion timer7.
+    // NVIC enable for timer 7
     NVIC_EnableIRQ(TIM7_IRQn);
     NVIC_SetPriority(TIM7_IRQn, 10);
+}
+
+
+void TIM7_Stop (void)
+{
+    TIM7->CR1 &= ~(TIM_CR1_CEN);
+    TIM7->CNT = 0;
+}
+
+
+void TIM7_Start (void)
+{
+    TIM7->CR1 |= TIM_CR1_CEN;
 }
 
 
@@ -455,7 +478,7 @@ void TIM7_IRQHandler (void)
     if (TIM7->SR & TIM_SR_UIF)
         TIM7->SR = ~(TIM_SR_UIF);
 
-    TIM7_UIF_Set();
+    Bit_Bang_Rx_Tim_Handler ();
 }
 
 
@@ -486,11 +509,6 @@ void TIM7_UIF_Set (void)
     timer_7_uif_flag = 1;
 }
 
-
-void TIM7_Stop (void)
-{
-    TIM7->CR1 &= ~(TIM_CR1_CEN);
-}
 
 ///////////////////////
 // Timer 8 Functions //

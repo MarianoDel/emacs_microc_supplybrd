@@ -19,6 +19,7 @@
 #include "usart.h"
 #include "dma.h"
 #include "tim.h"
+#include "bit_bang.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -28,6 +29,8 @@
 extern volatile unsigned short adc_ch [];
 extern volatile unsigned short wait_ms_var;
 extern volatile unsigned short timer_standby;
+extern volatile unsigned char timer_6_uif_flag;
+extern volatile unsigned char rx_int_handler;
 // extern volatile unsigned char usart3_have_data;
 
 
@@ -54,6 +57,12 @@ void TF_UsartRpi_Loop (void);
 void TF_UsartRpi_String (void);
 
 void TF_PowerOn_Channel1_Channel2 (void);
+
+void TF_Tim6_Int (void);
+void TF_Bit_Bang_Send (void);
+void TF_Bit_Bang_Loop (void);
+
+void TF_Int_Pb6 (void);
 // void TF_Adc_Usart1_Tx (void);
 // void TF_Adc_Usart1_Voltages (void);
 
@@ -64,7 +73,7 @@ void TF_Hardware_Tests (void)
     // TF_Act_Channels ();
     // TF_Enable_Channels ();
     // TF_Synchro_Channels ();
-    TF_Enable_5V_Comm ();
+    // TF_Enable_5V_Comm ();
     // TF_Enable_Lcd ();
     // TF_Enable_Rpi ();
     // TF_Enable_Encoder ();
@@ -82,6 +91,12 @@ void TF_Hardware_Tests (void)
 
     // TF_Adc_Usart1_Tx ();
     // TF_Adc_Usart1_Voltages ();
+
+    // TF_Tim6_Int ();
+    // TF_Bit_Bang_Send ();
+    TF_Bit_Bang_Loop ();
+
+    // TF_Int_Pb6();
 
 }
 
@@ -425,165 +440,93 @@ void TF_PowerOn_Channel1_Channel2 (void)
 }
 
 
-// void TF_Adc_Usart1_Tx (void)
-// {
-//     char buff [100] = { 0 };
-
-//     //-- Test ADC Multiple conversion Scanning (starts each sequence) and DMA 
-//     //-- DMA configuration.
-//     DMAConfig();
-//     DMA_ENABLE;
+// Bit Bang Tests Functions
+void TF_Bit_Bang_Send (void)
+{
+    // char buff [100];
+    Bit_Bang_Init ();
+    timer_standby = 5000;
     
-//     //Uso ADC con DMA
-//     AdcConfig();
-//     // ADC_START;
+    while (1)
+    {
+        if (!timer_standby)
+        {
+            Bit_Bang_Tx_Send ("enc 0 p 1\n");
+            // Bit_Bang_Tx_Send ("Ma");
+            timer_standby = 1000;
+        }
+    }
+}
 
-//     Usart1Config ();
+
+void TF_Bit_Bang_Loop (void)
+{
+    char buff [100];
+
+    Bit_Bang_Init ();
+    Bit_Bang_Tx_Send ("\nRx 1200 test\n");
     
-//     while (1)
-//     {
-//         for (int i = 0; i < ADC_CHANNEL_QUANTITY; i++)
-//             adc_ch[i] = 0;
-        
-//         Wait_ms(1000);
-//         Usart1Send("starting conversion with channels in:\n");
-//         sprintf(buff, "%d %d %d %d %d %d\n",
-//                 SENSE_POWER,
-//                 SENSE_MEAS,
-//                 V_SENSE_28V,
-//                 V_SENSE_25V,
-//                 V_SENSE_11V,
-//                 V_SENSE_8V);
-        
-//         Usart1Send (buff);
+    while (1)
+    {
+        if (Bit_Bang_Rx_Have_Data())
+        {
+            unsigned char len = 0;
+            // memset(buff, 0, 100);
+            len = Bit_Bang_Rx_ReadBuffer(buff);
 
-//         LED_ON;
-//         ADC_START;
-//         Wait_ms(100);
-//         LED_OFF;
-        
-//         Wait_ms(900);
-//         Usart1Send("conversion ended:\n");
-//         sprintf(buff, "%d %d %d %d %d %d\n",
-//                 SENSE_POWER,
-//                 SENSE_MEAS,
-//                 V_SENSE_28V,
-//                 V_SENSE_25V,
-//                 V_SENSE_11V,
-//                 V_SENSE_8V);
-        
-//         Usart1Send (buff);
-        
-//     }
-//     //--- End Test ADC Multiple conversion Scanning Continuous Mode and DMA ----------------//        
-// }
+            Wait_ms(1000);
+
+            if (len < 98)
+            {
+                buff[len] = '\n';
+                buff[len + 1] = '\0';
+                Bit_Bang_Tx_Send(buff);
+            }
+        }
+    }
+}
 
 
-// void TF_Adc_Usart1_Voltages (void)
-// {
-//     char buff [100] = { 0 };
-
-//     //-- Test ADC Multiple conversion Scanning (starts each sequence) and DMA 
-//     //-- DMA configuration.
-//     DMAConfig();
-//     DMA_ENABLE;
+void TF_Tim6_Int (void)
+{
+    // char buff [100];
+    TIM6_Init ();
+    TIM6_Start();
+    // Bit_Bang_Init ();
     
-//     //Uso ADC con DMA
-//     AdcConfig();
-//     // ADC_START;
+    while (1)
+    {
+        if (timer_6_uif_flag)
+        {
+            timer_6_uif_flag = 0;
+            if (PB7)
+                PB7_OFF;
+            else
+                PB7_ON;
+        }
+    }
+}
 
-//     Usart1Config ();
 
-//     int calc_int, calc_dec;
-//     while (1)
-//     {
-//         for (int i = 0; i < ADC_CHANNEL_QUANTITY; i++)
-//             adc_ch[i] = 0;
-        
-//         Wait_ms(1000);
-//         Usart1Send("starting conversion with channels in:\n");
-//         sprintf(buff, "%d %d %d %d %d %d\n",
-//                 SENSE_POWER,
-//                 SENSE_MEAS,
-//                 V_SENSE_28V,
-//                 V_SENSE_25V,
-//                 V_SENSE_11V,
-//                 V_SENSE_8V);
-        
-//         Usart1Send (buff);
+void TF_Int_Pb6 (void)
+{
+    Wait_ms(1000);
+    
+    EXTIOn();
+    
+    while (1)
+    {
+        if (rx_int_handler)
+        {
+            rx_int_handler = 0;
+            if (PB7)
+                PB7_OFF;
+            else
+                PB7_ON;
+        }
+    }
+}
 
-//         LED_ON;
-//         ADC_START;
-//         Wait_ms(100);
-//         LED_OFF;
-        
-//         Wait_ms(900);
-//         Usart1Send("conversion ended:\n");
-//         sprintf(buff, "%d %d %d %d %d %d\n",
-//                 SENSE_POWER,
-//                 SENSE_MEAS,
-//                 V_SENSE_28V,
-//                 V_SENSE_25V,
-//                 V_SENSE_11V,
-//                 V_SENSE_8V);
-
-//         // SENSE_POWER resistor multiplier 11
-//         calc_int = SENSE_POWER * 330 * 11;
-//         calc_int >>= 12;
-//         calc_dec = calc_int;
-//         calc_int = calc_int / 100;
-//         calc_dec = calc_dec - calc_int * 100;
-//         sprintf(buff, "Power: %d.%02d, ", calc_int, calc_dec);
-//         Usart1Send (buff);
-
-//         // SENSE_MEAS resistor multiplier 2
-//         calc_int = SENSE_MEAS * 330 * 2;
-//         calc_int >>= 12;
-//         calc_dec = calc_int;
-//         calc_int = calc_int / 100;
-//         calc_dec = calc_dec - calc_int * 100;
-//         sprintf(buff, "Meas: %d.%02d, ", calc_int, calc_dec);
-//         Usart1Send (buff);
-
-//         // V_SENSE_28V resistor multiplier 11
-//         calc_int = V_SENSE_28V * 330 * 11;
-//         calc_int >>= 12;
-//         calc_dec = calc_int;
-//         calc_int = calc_int / 100;
-//         calc_dec = calc_dec - calc_int * 100;
-//         sprintf(buff, "V28V: %d.%02d, ", calc_int, calc_dec);
-//         Usart1Send (buff);
-
-//         // V_SENSE_25V resistor multiplier 11
-//         calc_int = V_SENSE_25V * 330 * 11;
-//         calc_int >>= 12;
-//         calc_dec = calc_int;
-//         calc_int = calc_int / 100;
-//         calc_dec = calc_dec - calc_int * 100;
-//         sprintf(buff, "V25V: %d.%02d, ", calc_int, calc_dec);
-//         Usart1Send (buff);
-
-//         // V_SENSE_11V resistor multiplier 11
-//         calc_int = V_SENSE_11V * 330 * 11;
-//         calc_int >>= 12;
-//         calc_dec = calc_int;
-//         calc_int = calc_int / 100;
-//         calc_dec = calc_dec - calc_int * 100;
-//         sprintf(buff, "V11V: %d.%02d, ", calc_int, calc_dec);
-//         Usart1Send (buff);
-
-//         // V_SENSE_8V resistor multiplier 11
-//         calc_int = V_SENSE_8V * 330 * 11;
-//         calc_int >>= 12;
-//         calc_dec = calc_int;
-//         calc_int = calc_int / 100;
-//         calc_dec = calc_dec - calc_int * 100;
-//         sprintf(buff, "V8V: %d.%02d\n", calc_int, calc_dec);
-//         Usart1Send (buff);
-                
-//     }
-//     //--- End Test ADC Multiple conversion Scanning Continuous Mode and DMA ----------------//        
-// }
 
 
 //--- end of file ---//

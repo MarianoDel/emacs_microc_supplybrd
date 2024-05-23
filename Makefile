@@ -80,7 +80,7 @@ SRC += ./src/test_functions.c
 SRC += ./src/i2c_driver.c
 
 SRC += ./src/battery.c
-# SRC += ./src/antennas.c
+SRC += ./src/bit_bang.c
 # SRC += ./src/signals.c
 # SRC += ./src/errors.c
 
@@ -236,6 +236,20 @@ tests_comms:
 	./a.out
 	# process coverage
 	gcov comms.c -m
+
+
+tests_bit_bang:
+	# compile first modules in this test
+	# first module objects to test
+	gcc -c --coverage src/bit_bang.c -I. $(INCDIR) $(DDEFS)
+	# gcc -c src/utils.c -I. $(INCDIR) $(DDEFS)
+	# second auxiliary helper modules
+	gcc -c src/tests_ok.c -I $(INCDIR)
+	# gcc -c src/tests_mock_usart.c -I $(INCDIR)
+	gcc --coverage src/tests_bit_bang.c bit_bang.o tests_ok.o -I $(INCDIR) $(DDEFS)
+	./a.out
+	# process coverage
+	gcov bit_bang.c -m
 
 
 tests_signals:

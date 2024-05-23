@@ -222,5 +222,19 @@ void Hard_GetVoltages_Complete (void)
     
 }
 
+void Tx_Pin_On (void)
+{
+    PB7_ON;
+}
 
+
+void Tx_Pin_Off (void)
+{
+    PB7_OFF;
+}
+
+unsigned char Rx_Pin (void)
+{
+    return PB6;
+}
 //--- end of file ---//

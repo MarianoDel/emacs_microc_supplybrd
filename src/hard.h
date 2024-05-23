@@ -138,6 +138,14 @@
 // PB6 Alternative I2C1_SCL
 // PB7 Alternative I2C1_SDA
 
+// PB6 input Rx bit bang
+#define PB6    ((GPIOB->IDR & 0x0040) != 0)
+
+// PB7 output Tx bit bang
+#define PB7    ((GPIOB->ODR & 0x0080) != 0)
+#define PB7_ON    (GPIOB->BSRR = 0x00000080)
+#define PB7_OFF    (GPIOB->BSRR = 0x00800000)
+
 // PB8
 #define SYNC_CH4    ((GPIOB->ODR & 0x0100) != 0)
 #define SYNC_CH4_ON    (GPIOB->BSRR = 0x00000100)
@@ -247,4 +255,7 @@ void Act_Probe_Ch2_Off (void);
 void Act_Probe_Ch3_Off (void);
 void Act_Probe_Ch4_Off (void);
 
+void Tx_Pin_On (void);
+void Tx_Pin_Off (void);
+unsigned char Rx_Pin (void);
 #endif

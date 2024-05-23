@@ -11,7 +11,7 @@
 #include "bit_bang.h"
 
 // helper modules
-// #include "tests_ok.h"
+#include "tests_ok.h"
 // #include "tests_mock_usart.h"
 
 #include <stdio.h>
@@ -28,7 +28,8 @@
 
 
 // Module Functions to Test ----------------------------------------------------
-void Test_Bit_Bang (void);
+void Test_Bit_Bang_Send (void);
+void Test_Bit_Bang_Tx_Handler (void);
 
 
 // Module Auxiliary Functions --------------------------------------------------
@@ -42,14 +43,170 @@ void Test_Bit_Bang (void);
 int main (int argc, char *argv[])
 {
 
-    Test_Bit_Bang ();
+    Test_Bit_Bang_Send ();
+
+    Test_Bit_Bang_Tx_Handler ();
+
+    Test_Bit_Bang_Rx_Handler ();
 
     return 0;
 }
 
 
-void Test_Bit_Bang (void)
+extern volatile unsigned char tx_bytes_left;
+extern volatile unsigned char tx_buff[];
+void Test_Bit_Bang_Send (void)
 {
+    int error = 0;
+    char my_buff [100];
+
+    strcpy(my_buff, "Mariano");
+    int my_len = strlen(my_buff);
+
+    Bit_Bang_Tx_Send(my_buff);
+
+    printf("Test Send %d bytes left: ", tx_bytes_left);    
+    if (tx_bytes_left == my_len)
+        PrintOK();
+    else
+        PrintERR();
+
+    if (strncmp(my_buff, tx_buff, my_len) != 0)
+        error = 1;
+    
+    printf("Test Send %s bytes buff: ", tx_buff);    
+    if (error)
+        PrintERR();
+    else
+        PrintOK();        
+
+}
+
+int tx_ints = 0;
+int tx_loop = 0;
+void Test_Bit_Bang_Tx_Handler (void)
+{
+    int error = 0;
+    char my_buff [100];
+
+    strcpy(my_buff, "MMM");
+    int my_len = strlen(my_buff);
+
+    Bit_Bang_Init();
+    Bit_Bang_Tx_Send(my_buff);
+
+    if (tx_ints)
+    {
+        while (tx_loop)
+        {
+            Bit_Bang_Tx_Handler();
+        }
+    }
+
+    printf ("ints: %d tx_bytes_left: %d tx_loop: %d\n",
+            tx_ints,
+            tx_bytes_left,
+            tx_loop);
+        
+}
+
+
+
+extern volatile unsigned char rx_buff[];
+extern volatile unsigned char rx_ready;
+extern volatile unsigned char rx_bytes_cnt;
+unsigned char rx_pin_value = 0;
+int int_by_driver = 0;
+void Test_Bit_Bang_Rx_Handler (void)
+{
+    int error = 0;
+    char my_buff [100];
+
+    // strcpy(my_buff, "MMMM\n");
+    strcpy(my_buff, "Mariano\nMariano\n");    
+    int my_len = strlen(my_buff);
+
+    Bit_Bang_Init();
+
+    printf ("\n\nTesting Rx\n");
+    // start
+    int my_bytes_cnt = 0;
+    int byte_to_send = 0;
+    int my_mask = 0;
+
+    // force first rx init
+    Bit_Bang_Rx_Int_Handler ();        
+    
+    do {
+
+        byte_to_send = my_buff[my_bytes_cnt];
+        printf (" sending %x\n", byte_to_send);
+        my_mask = 0x80;
+        
+        // send start
+        if (int_by_driver)
+        {
+            int_by_driver = 0;
+            Bit_Bang_Rx_Int_Handler ();
+        }
+        
+        rx_pin_value = 0;
+        printf(" %dS", rx_pin_value);
+        Bit_Bang_Rx_Tim_Handler();
+        if (rx_ready)
+            printf ("data is ready! on start\n");
+        
+        for (int i = 0; i < 16; i++)
+        {
+            if (byte_to_send & my_mask)
+                rx_pin_value = 1;
+            else
+                rx_pin_value = 0;
+
+            if (i & 0x01)    // transition
+            {
+                my_mask >>= 1;
+            }
+
+            printf(" %d", rx_pin_value);
+            Bit_Bang_Rx_Tim_Handler();
+
+            if (rx_ready)
+                printf ("data is ready! on bytes\n");
+        }        
+
+        // send stop
+        rx_pin_value = 1;
+        printf(" %d", rx_pin_value);
+        Bit_Bang_Rx_Tim_Handler();
+        rx_pin_value = 1;
+        printf(" %dP\n", rx_pin_value);
+        Bit_Bang_Rx_Tim_Handler();
+
+        my_len--;
+        my_bytes_cnt++;
+        
+        printf ("  bytes_send: %d rx_buff[%d]: %x\n",
+                my_bytes_cnt,
+                rx_bytes_cnt - 1,
+                rx_buff[rx_bytes_cnt - 1]);
+
+        if (Bit_Bang_Rx_Have_Data())
+        {
+            int len = 0;
+            char my_rx [100];
+            len = Bit_Bang_Rx_ReadBuffer(&my_rx);
+            printf("data len: %d rx: %s\n", len, my_rx);
+        }
+        
+        // if (rx_ready)
+        // {
+        //     printf ("data is ready! on stop\n");
+        //     }
+        // }
+        
+    } while (my_len);
+        
 }
 
 
@@ -195,12 +352,15 @@ void Test_Bit_Bang (void)
 void Tim_Bit_Bang_Tx_Reset(void)
 {
     printf("tim int reset\n");
+    tx_loop = 0;
 }
 
 
 void Tim_Bit_Bang_Tx_Set(void)
 {
     printf("tim int set\n");
+    tx_ints++;
+    tx_loop = 1;
 }
 
 
@@ -215,8 +375,32 @@ void Tx_Pin_Off (void)
     printf(" 0");
 }
 
+unsigned char Rx_Pin (void)
+{
+    return rx_pin_value;
+}
+
+void Rx_Int_Enable (void)
+{
+    printf("\nrx int enabled by driver\n");
+    int_by_driver = 1;
+}
 
 
+void Rx_Int_Disable (void)
+{
+    printf("\nrx int disabled by driver\n");
+}
+
+void Tim_Bit_Bang_Rx_Set (void)
+{
+    printf("\ntim enabled by driver\n");
+}
+
+void Tim_Bit_Bang_Rx_Reset (void)
+{
+    printf("\ntim disabled by driver\n");
+}
 //--- end of file ---//
 
 

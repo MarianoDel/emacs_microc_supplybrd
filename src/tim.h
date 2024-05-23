@@ -63,6 +63,8 @@ unsigned char TIM6_UIF_Get_Flag (void);
 void TIM6_UIF_Reset (void);
 void TIM6_UIF_Set (void);
 void TIM6_Stop (void);
+void TIM6_Start (void);
+
 
 void TIM7_Init(void);
 void TIM7_IRQHandler (void);
@@ -71,6 +73,7 @@ unsigned char TIM7_UIF_Get_Flag (void);
 void TIM7_UIF_Reset (void);
 void TIM7_UIF_Set (void);
 void TIM7_Stop (void);
+void TIM7_Start (void);
 
 // Timer 8 Functions
 void TIM8_Init (void);

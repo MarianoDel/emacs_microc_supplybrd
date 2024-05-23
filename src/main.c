@@ -27,6 +27,8 @@
 #include "i2c_driver.h"
 #include "battery.h"
 
+#include "bit_bang.h"
+
 #include <stdio.h>
 #include <string.h>
 
@@ -329,7 +331,20 @@ void Full_Working_Loop (void)
     }
     
     // rx from I2C
-    i2c_driver_update ();
+    // i2c_driver_update ();
+
+    // rx on encoders board
+    if (Bit_Bang_Rx_Have_Data())
+    {
+        unsigned char len;
+        len = Bit_Bang_Rx_ReadBuffer(buff);
+        if (len < SIZE_BUFFRX - 1)
+        {
+            buff[len] = '\n';
+            buff[len + 1] = '\0';
+            UsartRpiSend(buff);
+        }
+    }
         
     // enable channel on probe detection
     Probe_Detect_Update ();
@@ -372,9 +387,10 @@ void Starts_Everything (void)
     ENA_ENCODER_ON;
 
     //-- Comms with encoders board
-    I2C1_Init();
-    I2C1_OwnAddress (0x44);
-    I2C1_Ack (1);
+    // I2C1_Init();
+    // I2C1_OwnAddress (0x44);
+    // I2C1_Ack (1);
+    Bit_Bang_Init();
 
     //-- Comms with rasp & channels
     UsartRpiConfig ();
@@ -400,7 +416,8 @@ void Shutdown_Everything (void)
     ENA_ENCODER_OFF;
 
     //-- Comms with encoders board
-    I2C1_Shutdown ();
+    // I2C1_Shutdown ();
+    Bit_Bang_Shutdown();
     
     //-- All channels disabled
     Ena_Ch1_Off();
@@ -463,16 +480,16 @@ void Probe_Detect_Update (void)
         }
     }
 }
-// extern void TF_Prot_Int_Handler (unsigned char ch);
-// void EXTI2_IRQHandler (void)
-// {
-//     if(EXTI->PR & EXTI_PR_PR2)    //Line2
-//     {
-//         Signals_Overcurrent_Handler (CH3);
-//         // TF_Prot_Int_Handler (3);    // PROT_CH3 for tests
-//         EXTI->PR |= EXTI_PR_PR2;
-//     }
-// }
+
+
+void EXTI9_5_IRQHandler (void)
+{
+    if(EXTI->PR & EXTI_PR_PR6)    //Line6
+    {
+        EXTI->PR |= EXTI_PR_PR6;
+        Bit_Bang_Rx_Int_Handler ();
+    }
+}
 
 
 // void EXTI4_IRQHandler (void)

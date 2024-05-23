@@ -8,6 +8,8 @@
 
 // Includes --------------------------------------------------------------------
 #include "i2c_driver.h"
+#include "i2c.h"
+#include "tim.h"
 #include "stm32f10x.h"
 #include "usart.h"
 #include "usart_channels.h"
@@ -30,7 +32,7 @@ volatile unsigned char i2c_driver_tt = 0;
 
 // Module Private Functions ----------------------------------------------------
 void i2c_send_eight (unsigned char * tt);
-void i2c_send_ten (unsigned char * tt);
+unsigned char i2c_send_ten (unsigned char * tt);
 void i2c_validate_encod_data (char * buff);
 
 
@@ -42,6 +44,7 @@ void i2c_driver_timeouts (void)
 }
 
 
+unsigned short i2c_driver_error_cnt = 0;
 void i2c_driver_update (void)
 {
     if (I2C1->SR1 & I2C_SR1_ADDR)
@@ -57,20 +60,34 @@ void i2c_driver_update (void)
         dummy++;
 
         // check for Tx
-        i2c_driver_tt = 5;
+        i2c_driver_tt = 100;
         if (I2C1->SR1 & I2C_SR1_TXE)
         {
+            unsigned char error = 0;
             // i2c_send_eight ((unsigned char *) &i2c_driver_tt);
-            i2c_send_ten ((unsigned char *) &i2c_driver_tt);            
+            error = i2c_send_ten ((unsigned char *) &i2c_driver_tt);
             
             // free lines on slave
             I2C1->CR1 |= I2C_CR1_STOP;
             I2C1->CR1 &= ~I2C_CR1_STOP;
+
+            // if (error)
+            // {
+            //     if (i2c_driver_error_cnt < 100)
+            //         i2c_driver_error_cnt++;
+            //     else
+            //     {
+            //         i2c_driver_error_cnt = 0;
+            //         I2C1_Shutdown();
+            //         Wait_ms(10);
+            //         I2C1_Init();
+            //     }
+            // }
             return;
         }
 
         // check rx data
-        i2c_driver_tt = 5;
+        i2c_driver_tt = 100;
         do {
             if (I2C1->SR1 & I2C_SR1_RXNE)
             {
@@ -131,7 +148,7 @@ void i2c_send_eight (unsigned char * tt)
 }
 
 
-void i2c_send_ten (unsigned char * tt)
+unsigned char i2c_send_ten (unsigned char * tt)
 {
     unsigned char loop_data = 0;
     int loop = 1;
@@ -157,6 +174,11 @@ void i2c_send_ten (unsigned char * tt)
             (*tt == 0))
             loop = 0;
     }
+
+    if (*tt == 0)
+        return 1;
+
+    return 0;
 }
 
 

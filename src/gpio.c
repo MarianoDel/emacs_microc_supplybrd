@@ -15,7 +15,7 @@
 
 
 // Module Private Types Constants and Macros -----------------------------------
-// #define USE_EXTI_LINES
+#define USE_EXTI_LINES
 
 
 #define RCC_GPIOA_CLK    (RCC->APB2ENR & 0x00000004)
@@ -138,11 +138,11 @@ void GpioInit (void)
     //PB3 NC jtag
     //PB4 NC jtag
     //PB5 NC
-    //PB6 Alternative I2C1_SCL
-    //PB7 Alternative I2C1_SDA
+    //PB6 Rx pin bit bang
+    //PB7 Tx pin bit bang
     temp = GPIOB->CRL;
     temp &= 0x00FFF000;
-    temp |= 0xEE000222;
+    temp |= 0x24000222;
     GPIOB->CRL = temp;
 
     //--- GPIOB High Side -------------------//
@@ -221,46 +221,24 @@ void GpioInit (void)
     
 #ifdef USE_EXTI_LINES
     //Interrupts on:
-    // PA4 PROT_CH4
-    // PB2 PROT_CH3
-    // PB13 PROT_CH2
-    // PB15 PROT_CH1
+    // PB6 Rx bit bang pin
     if (!RCC_AFIO_CLK)
         RCC_AFIO_CLKEN;
 
-    // EXTI2 Select Port B & Pin2 for external interrupt
-    temp = AFIO->EXTICR[0];
-    temp &= ~AFIO_EXTICR1_EXTI2;
-    temp |= AFIO_EXTICR1_EXTI2_PB;
-    AFIO->EXTICR[0] = (unsigned short) temp;
-
-    // EXTI4 Select Port A & Pin4 for external interrupt
+    // EXTI6 Select Port B & Pin6 for external interrupt
     temp = AFIO->EXTICR[1];
-    temp &= ~AFIO_EXTICR2_EXTI4;
-    temp |= AFIO_EXTICR2_EXTI4_PA;
+    temp &= ~AFIO_EXTICR2_EXTI6;
+    temp |= AFIO_EXTICR2_EXTI6_PB;
     AFIO->EXTICR[1] = (unsigned short) temp;
-
-    // EXTI13 & EXTI15 Select PortB-Pin13 and PortB-Pin15 for external interrupt
-    temp = AFIO->EXTICR[3];
-    temp &= ~(AFIO_EXTICR4_EXTI13 | AFIO_EXTICR4_EXTI15);
-    temp |= (AFIO_EXTICR4_EXTI13_PB | AFIO_EXTICR4_EXTI15_PB);
-    AFIO->EXTICR[3] = (unsigned short) temp;
 
     // EXTI->IMR |= 0x00000001;    //Corresponding mask bit for interrupts EXTI2 EXTI4 EXTI13 EXTI15
     // EXTI->EMR |= 0x00000000;    //Corresponding mask bit for events
-    //Interrupt line on rising edge
-    EXTI->RTSR |= EXTI_RTSR_TR2 | EXTI_RTSR_TR4 | EXTI_RTSR_TR13 | EXTI_RTSR_TR15;
-    EXTI->FTSR |= 0x00000000;    //Interrupt line on falling edge
+    EXTI->RTSR |= 0x00000000;
+    EXTI->FTSR |= EXTI_FTSR_TR6;    //Interrupt line on falling edge
 
     // Enable NVIC for EXTIs
-    NVIC_EnableIRQ(EXTI2_IRQn);
-    NVIC_SetPriority(EXTI2_IRQn, 2);
-
-    NVIC_EnableIRQ(EXTI4_IRQn);
-    NVIC_SetPriority(EXTI4_IRQn, 2);
-    
-    NVIC_EnableIRQ(EXTI15_10_IRQn);
-    NVIC_SetPriority(EXTI15_10_IRQn, 2);
+    NVIC_EnableIRQ(EXTI9_5_IRQn);
+    NVIC_SetPriority(EXTI9_5_IRQn, 3);
     
 #endif    // USE_EXTI_LINES
 }
@@ -269,12 +247,14 @@ void GpioInit (void)
 #ifdef USE_EXTI_LINES
 void EXTIOff (void)
 {
-    EXTI->IMR &= ~(EXTI_IMR_MR2 | EXTI_IMR_MR4 | EXTI_IMR_MR13 | EXTI_IMR_MR15);
+    // EXTI->IMR &= ~(EXTI_IMR_MR2 | EXTI_IMR_MR4 | EXTI_IMR_MR13 | EXTI_IMR_MR15);
+    EXTI->IMR &= ~(EXTI_IMR_MR6);
 }
 
 void EXTIOn (void)
 {
-    EXTI->IMR |= (EXTI_IMR_MR2 | EXTI_IMR_MR4 | EXTI_IMR_MR13 | EXTI_IMR_MR15);
+    // EXTI->IMR |= (EXTI_IMR_MR2 | EXTI_IMR_MR4 | EXTI_IMR_MR13 | EXTI_IMR_MR15);
+    EXTI->IMR |= (EXTI_IMR_MR6);
 }
 #endif
 
