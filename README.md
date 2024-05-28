@@ -17,6 +17,6 @@ Before begin check micro selection and configs.
 >./startup_src/stm32_flash.ld
 
 * check processor definition on line 68 -> but modify on Makefile
->./cmsis_boot/stm32f0xx.h
+>./src/stm32f10x.h
 >.Makefile
 
