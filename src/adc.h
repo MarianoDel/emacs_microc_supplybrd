@@ -11,6 +11,8 @@
 #define _ADC_H_
 
 //----------- Defines For Configuration --------------//
+#include <stdint.h>
+
 //----------- Some ADC Configurations ----------------//
 // #define ADC_WITH_INT
 // #define USE_ADC_SAMPLE_BY_SAMPLE
