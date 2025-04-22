@@ -26,14 +26,22 @@
 #define SIZEOF_BOARD_TEMP		8
 #endif
 
-#define SENSE_POWER    adc_ch[0]
-#define SENSE_MEAS    adc_ch[1]
-#define V_SENSE_25V    adc_ch[2]
-#define V_SENSE_8V    adc_ch[3]
-#define V_SENSE_11V    adc_ch[4]
-#define V_SENSE_28V    adc_ch[5]
+#define Sense_BOOST    adc_ch[0]
+#define Sense_12V_EXT    adc_ch[1]
+#define Sense_BAT_CH1    adc_ch[2]
+#define Sense_BAT_CH2    adc_ch[3]
+#define Sense_BAT_CH3    adc_ch[4]
+#define Sense_BAT_CH4    adc_ch[5]
 #define ADC_CHANNEL_QUANTITY    6
 #define ADC_LAST_CHANNEL_QUANTITY    (ADC_CHANNEL_QUANTITY - 1)
+// #define SENSE_POWER    adc_ch[0]
+// #define SENSE_MEAS    adc_ch[1]
+// #define V_SENSE_25V    adc_ch[2]
+// #define V_SENSE_8V    adc_ch[3]
+// #define V_SENSE_11V    adc_ch[4]
+// #define V_SENSE_28V    adc_ch[5]
+// #define ADC_CHANNEL_QUANTITY    6
+// #define ADC_LAST_CHANNEL_QUANTITY    (ADC_CHANNEL_QUANTITY - 1)
 //----------- End of ADC Configurations --------------//
 
 
@@ -97,7 +105,7 @@ void AdcSetChannelsQuantity (unsigned int);
 void AdcConvertChannel (unsigned char);
 unsigned char AdcConvertSingleChannelFinishFlag (void);
 unsigned short AdcConvertChannelResult (void);
-
+void AdcStart (void);
 
 #ifdef ADC_WITH_TEMP_SENSE
 void UpdateTemp(void);

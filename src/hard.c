@@ -31,6 +31,50 @@ extern volatile unsigned short adc_ch [];
 
 
 // Module Functions ------------------------------------------------------------
+#ifdef HARDWARE_VERSION_2_0
+unsigned char Led_Is_On (void)
+{
+    return LED;
+}
+
+
+void Led_On (void)
+{
+    LED_ON;
+}
+
+
+void Led_Off (void)
+{
+    LED_OFF;
+}
+
+
+unsigned char Sw_Power_On (void)
+{
+    return SW_POWER_ON;
+}
+
+unsigned char OnOff_Is_On (void)
+{
+    return ON_OFF;
+}
+
+
+void OnOff_On (void)
+{
+    ON_OFF_ON;
+}
+
+
+void OnOff_Off (void)
+{
+    ON_OFF_OFF;
+}
+
+#endif
+
+#ifdef HARDWARE_VERSION_1_0
 void Ena_Ch1_On (void)
 {
     ENA_CH1_ON;
@@ -237,4 +281,5 @@ unsigned char Rx_Pin (void)
 {
     return PB6;
 }
+#endif    // HARDWARE_VERSION_1_0
 //--- end of file ---//

@@ -16,7 +16,8 @@
 
 //----- Board Configuration -------------------//
 //--- Hardware ------------------//
-#define HARDWARE_VERSION_1_0    // first prototype
+#define HARDWARE_VERSION_2_0    // only boost and batt manager
+// #define HARDWARE_VERSION_1_0    // first prototype
 
 
 //--- Software ------------------//
@@ -71,6 +72,9 @@
 
 
 //--- Hardware & Software Messages ------------------//
+#ifdef HARDWARE_VERSION_2_0
+#define HARD "Hardware Version: 2.0"
+#endif
 #ifdef HARDWARE_VERSION_1_0
 #define HARD "Hardware Version: 1.0"
 #endif
@@ -82,6 +86,70 @@
 
 
 // Exported Types --------------------------------------------------------------
+#ifdef HARDWARE_VERSION_2_0
+
+// PA defines ----
+// PA0 Alternative TIM8_ETR input
+
+// PA1 NC
+// PA2 Analog Channel 2 (Sense_BOOST)
+// PA3 Analog Channel 3 (Sense_12V_EXT)
+
+// PA4 Analog DAC Output1 (DAC_OUT1)
+// PA5 NC
+// PA6 NC
+
+// PA7 Alterantive (TIM3_CH2)
+// PA8 Alterantive (TIM1_CH1)
+
+// PA9 PA10 PA11 NC
+
+// PA12 Alternative TIM1_ETR input
+
+// PA13 PA14 PA15 NC jtag
+
+// PB defines ----
+// PB0 
+#define ON_OFF    ((GPIOB->ODR & 0x0001) != 0)
+#define ON_OFF_ON    (GPIOB->BSRR = 0x00000001)
+#define ON_OFF_OFF    (GPIOB->BSRR = 0x00010000)
+
+// PB1 PB2 NC
+
+// PB3 PB4 NC jtag
+
+// PB5 PB6 PB7 PB8 PB9 NC
+
+// PB10 PB11 Alternative Usart3 Tx Rx
+
+// PB12
+#define LED    ((GPIOB->ODR & 0x1000) != 0)
+#define LED_ON    (GPIOB->BSRR = 0x00001000)
+#define LED_OFF    (GPIOB->BSRR = 0x10000000)
+
+// PB13 PB14 PB15 NC
+
+// PC defines ----
+// PC0 Analog Channel 10 (Sense_BAT_CH1)
+// PC1 Analog Channel 11 (Sense_BAT_CH2)
+// PC2 Analog Channel 12 (Sense_BAT_CH3)
+// PC3 Analog Channel 13 (Sense_BAT_CH4)
+
+// PC4 PC5 NC
+
+// PC6 Alterantive (TIM8_CH1)
+
+// PC7 PC8 PC9 PC10 PC11 PC12 PC13 PC14 PC15 NC
+
+// PD defines ----
+// PD0 PD1 NC
+
+// PD2 
+#define SW_POWER_ON    ((GPIOD->IDR & 0x0004) != 0)
+
+#endif //HARDWARE_VERSION_2_0
+
+
 #ifdef HARDWARE_VERSION_1_0
 
 // PA defines ----
@@ -233,6 +301,17 @@
 
 
 //--- Exported Module Functions ----
+#ifdef HARDWARE_VERSION_2_0
+unsigned char Led_Is_On (void);
+void Led_On (void);
+void Led_Off (void);
+unsigned char Sw_Power_On (void);
+unsigned char OnOff_Is_On (void);
+void OnOff_On (void);
+void OnOff_Off (void);
+#endif
+
+#ifdef HARDWARE_VERSION_1_0
 void Hard_GetVoltages (char * buff);
 void Hard_GetHardSoft (char * buff);
 void Hard_GetVoltages_Complete (void);
@@ -258,4 +337,6 @@ void Act_Probe_Ch4_Off (void);
 void Tx_Pin_On (void);
 void Tx_Pin_Off (void);
 unsigned char Rx_Pin (void);
-#endif
+#endif    // HARDWARE_VERSION_1_0
+
+#endif    /* HARD_H_ */

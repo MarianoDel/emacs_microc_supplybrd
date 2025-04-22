@@ -14,14 +14,13 @@
 // #define DMA_WITH_INTERRUPT
 
 //--- Exported Macros ---//
-#define RCC_DMA1_CLK            (RCC->AHBENR & RCC_AHBENR_DMA1EN)
-#define RCC_DMA1_CLK_ON 		RCC->AHBENR |= RCC_AHBENR_DMA1EN
-#define RCC_DMA1_CLK_OFF 	RCC->AHBENR &= ~RCC_AHBENR_DMA1EN
-
 #define sequence_ready         (DMA1->ISR & DMA_ISR_TCIF1)
 #define sequence_ready_reset   (DMA1->IFCR = DMA_ISR_TCIF1)
 
 #define DMA_ENABLE    (DMA1_Channel1->CCR |= DMA_CCR1_EN)
+
+#define DMA1_CH3_ENABLE    (DMA1_Channel3->CCR |= DMA_CCR1_EN)
+#define DMA1_CH3_DISABLE    (DMA1_Channel3->CCR &= ~DMA_CCR1_EN)
 
 //--- Exported constants ---//
 
@@ -32,6 +31,7 @@ void DMAEnableInterrupt (void);
 void DMADisableInterrupt (void);
 void DMA1_Channel1_IRQHandler (void);
 
+void DMA1_Channel3_Config (void);
 
 
 

@@ -32,7 +32,8 @@ void DAC_Config (void)
     // Enable DAC1, no trigger with buffer
     // Enable DAC2, no trigger with buffer    
     // DAC->CR |= DAC_CR_BOFF1 | DAC_CR_EN1;
-    DAC->CR |= DAC_CR_EN2 | DAC_CR_EN1;
+    // DAC->CR |= DAC_CR_EN2 | DAC_CR_EN1;    // enable dac2 dac1
+    DAC->CR |= DAC_CR_EN1;    // enable dac1
 
 }
 

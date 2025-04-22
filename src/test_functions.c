@@ -15,11 +15,13 @@
 #include "stm32f10x.h"
 #include "gpio.h"
 #include "adc.h"
-#include "usart_channels.h"
+#include "dac.h"
 #include "usart.h"
 #include "dma.h"
 #include "tim.h"
-#include "bit_bang.h"
+
+#include "neopixel.h"
+#include "neopixel_driver.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -38,6 +40,17 @@ extern volatile unsigned char rx_int_handler;
 
 
 // Module Private Functions ----------------------------------------------------
+#ifdef HARDWARE_VERSION_2_0
+void TF_Led (void);
+void TF_Led_Dac (void);
+void TF_Led_Sw_Power_On (void);
+void TF_Led_OnOff (void);
+void TF_Usart3_Loop (void);
+void TF_Usart3_Analog (void);
+void TF_Tim3_Ch2_NeoPixel_1_Enable (void);
+#endif
+
+#ifdef HARDWARE_VERSION_1_0
 void TF_Act_Channels (void);
 void TF_Enable_Channels (void);
 void TF_Synchro_Channels (void);
@@ -65,42 +78,207 @@ void TF_Bit_Bang_Loop (void);
 void TF_Int_Pb6 (void);
 // void TF_Adc_Usart1_Tx (void);
 // void TF_Adc_Usart1_Voltages (void);
-
+#endif
 
 // Module Functions ------------------------------------------------------------
 void TF_Hardware_Tests (void)
 {
-    // TF_Act_Channels ();
-    // TF_Enable_Channels ();
-    // TF_Synchro_Channels ();
-    // TF_Enable_5V_Comm ();
-    // TF_Enable_Lcd ();
-    // TF_Enable_Rpi ();
-    // TF_Enable_Encoder ();
-    // TF_Enable_Boost ();
-
-    // TF_UsartChannel1_Loop ();
-    // TF_UsartChannel2_Loop ();
-    // TF_UsartChannel3_Loop ();
-    // TF_UsartChannel4_Loop ();    
-
-    // TF_UsartRpi_Loop ();
-    // TF_UsartRpi_String ();
-
-    // TF_PowerOn_Channel1_Channel2 ();
-
-    // TF_Adc_Usart1_Tx ();
-    // TF_Adc_Usart1_Voltages ();
-
-    // TF_Tim6_Int ();
-    // TF_Bit_Bang_Send ();
-    TF_Bit_Bang_Loop ();
-
-    // TF_Int_Pb6();
-
+    // TF_Led ();
+    // TF_Led_Dac ();
+    // TF_Led_Sw_Power_On ();
+    // TF_Led_OnOff ();
+    // TF_Usart3_Loop ();
+    // TF_Usart3_Analog ();
+    TF_Tim3_Ch2_NeoPixel_1_Enable ();
 }
 
 
+void TF_Led (void)
+{
+    while (1)
+    {
+	if (Led_Is_On())
+	    Led_Off();
+	else
+	    Led_On();
+
+	Wait_ms (1000);
+    }
+}
+
+
+void TF_Led_Dac (void)
+{
+    //-- DAC init for signal generation
+    DAC_Config ();
+    DAC_Output1(0);
+
+    while (1)
+    {
+	if (Led_Is_On())
+	{
+	    Led_Off();
+	    DAC_Output1 (0);
+	}
+	else
+	{
+	    Led_On();
+	    DAC_Output1 (2047);
+	}
+
+	Wait_ms (5000);
+    }
+}
+
+
+void TF_Led_Sw_Power_On (void)
+{
+    while (1)
+    {
+	if (Sw_Power_On())
+	    Led_On();
+	else
+	    Led_Off();
+
+	Wait_ms (100);
+    }
+}
+
+
+void TF_Led_OnOff (void)
+{
+
+    while (1)
+    {
+	if (OnOff_Is_On())
+	{
+	    Led_Off();
+	    OnOff_Off();
+	}
+	else
+	{
+	    Led_On();
+	    OnOff_On();
+	}
+
+	Wait_ms (5000);
+    }
+}
+
+
+// place a shortcut on IC4 2 & IC3 4
+void TF_Usart3_Loop (void)
+{
+    char buff [100];
+    
+    Usart3Config();
+    
+    while (1)
+    {
+        if (!timer_standby)
+        {
+            Usart3Send("Mariano\n");
+            timer_standby = 2000;
+            if (Led_Is_On())
+                Led_Off();
+        }
+
+        if (Usart3HaveData())
+        {
+            Usart3HaveDataReset();
+            Usart3ReadBuffer(buff, 100);
+            if (strncmp(buff, "Mariano", sizeof("Mariano") - 1) == 0)
+                Led_On();
+        }
+    }
+}
+
+
+void TF_Usart3_Analog (void)
+{
+    char buff [100];
+
+    // Init ADC with DMA
+    DMAConfig ();
+    DMA_ENABLE;
+    
+    AdcConfig();
+    AdcStart();
+    
+    // Init Usart3
+    Usart3Config();
+    
+    while (1)
+    {
+        if (!timer_standby)
+        {
+	    Led_On();
+	    timer_standby = 2000;
+	    sprintf(buff, "b1: %d b2: %d b3: %d b4: %d 12v_ext: %d boost: %d\r\n",
+		    Sense_BAT_CH1,
+		    Sense_BAT_CH2,
+		    Sense_BAT_CH3,
+		    Sense_BAT_CH4,
+		    Sense_12V_EXT,
+		    Sense_BOOST);
+            Usart3Send(buff);
+	    Led_Off();
+        }
+    }
+}
+
+
+void TF_Tim3_Ch2_NeoPixel_1_Enable (void)
+{
+    unsigned char cnt = 0;
+    pixel_t my_pixel;
+
+    TIM3_Init();
+
+    my_pixel.R = 0;
+    my_pixel.G = 0;
+    my_pixel.B = 0;
+
+    // start entire buffer with null color
+    Neo_Set_Pixel(0, &my_pixel);
+
+    while (1)
+    {
+	Led_On();
+	switch (cnt)
+	{
+	case 0:
+	    cnt++;
+	    my_pixel.R = 255;
+	    my_pixel.G = 0;
+	    my_pixel.B = 0;
+	    break;
+	    
+	case 1:
+	    cnt++;
+	    my_pixel.R = 0;
+	    my_pixel.G = 255;
+	    my_pixel.B = 0;
+	    break;
+
+	case 2:
+	    cnt = 0;
+	    my_pixel.R = 0;
+	    my_pixel.G = 0;
+	    my_pixel.B = 255;
+	    break;
+	}
+	
+	Neo_Set_Pixel(0, &my_pixel);
+	Neo_Driver_Send_Pixel_Data();
+	Wait_ms(100);
+	Led_Off();
+	Wait_ms(1900);	
+    }
+}
+
+
+#ifdef HARDWARE_VERSION_1_0
 void TF_Act_Channels (void)
 {
     while (1)
@@ -526,7 +704,7 @@ void TF_Int_Pb6 (void)
         }
     }
 }
-
+#endif    // HARDWARE_VERSION_1_0
 
 
 //--- end of file ---//

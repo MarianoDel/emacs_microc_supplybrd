@@ -15,8 +15,13 @@
 
 
 // Module Private Types Constants and Macros -----------------------------------
-#define USE_EXTI_LINES
+#ifdef HARDWARE_VERSION_2_0
+// #define USE_EXTI_LINES
+#endif
 
+#ifdef HARDWARE_VERSION_1_0
+#define USE_EXTI_LINES
+#endif
 
 #define RCC_GPIOA_CLK    (RCC->APB2ENR & 0x00000004)
 #define RCC_GPIOA_CLKEN    (RCC->APB2ENR |= 0x00000004)
@@ -97,6 +102,159 @@ void GpioInit (void)
     if (!RCC_GPIOD_CLK)
         RCC_GPIOD_CLKEN;
 
+#ifdef HARDWARE_VERSION_2_0    
+    //--- GPIOA Low Side ------------------//
+    // PA0 Alternative TIM8_ETR input
+    // PA1 NC
+    // PA2 Analog Channel 2 (Sense_BOOST)
+    // PA3 Analog Channel 3 (Sense_12V_EXT)
+    // PA4 Analog DAC Output1 (DAC_OUT1)
+    // PA5 NC
+    // PA6 NC
+    // PA7 Alternative (TIM3_CH2) open drain
+    temp = GPIOA->CRL;
+    temp &= 0x0FF000F0;
+    temp |= 0xF0000004;
+    GPIOA->CRL = temp;
+
+    //--- GPIOA High Side ------------------//
+    //PA8 Alternative (TIM1_CH1), starts on default
+    //PA9 NC
+    //PA10 NC
+    //PA11 NC
+    //PA12 Alternative TIM1_ETR input
+    //PA13 NC
+    //PA14 NC
+    //PA15 NC
+    temp = GPIOA->CRH;
+    // temp &= 0xFFF0FFF0;
+    // temp |= 0x0004000F;
+    temp &= 0xFFF0FFFF;
+    temp |= 0x00040000;
+    GPIOA->CRH = temp;
+
+    //--- GPIOA Pull-Up Pull-Dwn ------------------//
+    temp = GPIOA->ODR;
+    temp &= 0xFFFF;   
+    temp |= 0x0000;
+    GPIOA->ODR = temp;
+
+    //--- GPIOB Low Side -------------------//
+    //PB0 ON_OFF
+    //PB1 NC
+    //PB2 NC
+    //PB3 NC jtag
+    //PB4 NC jtag
+    //PB5 NC
+    //PB6 NC
+    //PB7 NC
+    temp = GPIOB->CRL;
+    temp &= 0xFFFFFFF0;
+    temp |= 0x00000002;
+    GPIOB->CRL = temp;
+
+    //--- GPIOB High Side -------------------//
+    //PB8 NC
+    //PB9 NC
+    //PB10 alternative Tx Usart3
+    //PB11 alternative Rx Usart3
+    //PB12 LED
+    //PB13 NC
+    //PB14 NC
+    //PB15 NC
+    temp = GPIOB->CRH;
+    temp &= 0xFFF000FF;
+    temp |= 0x00028B00;
+    GPIOB->CRH = temp;    
+    
+    //--- GPIOB Pull-Up Pull-Dwn ------------------//
+    temp = GPIOB->ODR;    //PB11 pull-up
+    temp &= 0xF7FF;
+    temp |= 0x0800;
+    GPIOB->ODR = temp;
+
+    //--- GPIOC Low Side -------------------//
+    // PC0 Analog Channel 10 (Sense_BAT_CH1)
+    // PC1 Analog Channel 11 (Sense_BAT_CH2)
+    // PC2 Analog Channel 12 (Sense_BAT_CH3)
+    // PC3 Analog Channel 13 (Sense_BAT_CH4)
+    // PC4 NC
+    // PC5 NC
+    // PC6 Alterantive (TIM8_CH1), starts on default
+    // PC7 NC
+
+    temp = GPIOC->CRL;
+    // temp &= 0xF0FF0000;
+    // temp |= 0x0F000000;
+    temp &= 0xFFFF0000;
+    temp |= 0x00000000;
+    GPIOC->CRL = temp;
+
+    //--- GPIOC High Side -------------------//
+    //PC8 NC
+    //PC9 NC
+    //PC10 NC
+    //PC11 NC
+    //PC12 NC
+    //PC13 NC
+    //PC14 NC    oscillator
+    //PC15 NC    oscillator
+    temp = GPIOC->CRH;   
+    temp &= 0xFFFFFFFF;
+    temp |= 0x00000000;
+    GPIOC->CRH = temp;
+
+    //--- GPIOC Pull-Up Pull-Dwn ------------------//
+    temp = GPIOC->ODR;
+    temp &= 0xFFFF;
+    temp |= 0x0000;
+    GPIOC->ODR = temp;
+
+    //--- GPIOD Low Side -------------------//
+    //PD0 NC
+    //PD1 NC
+    //PD2 SW_POWER_ON
+    //PD3 No implemented
+    //PD4 No implemented
+    //PD5 No implemented
+    //PD6 No implemented
+    //PD7 No implemented    
+    temp = GPIOD->CRL;   
+    temp &= 0xFFFFF0FF;
+    temp |= 0x00000800;
+    GPIOD->CRL = temp;
+
+    //--- GPIOD Pull-Up Pull-Dwn ------------------//
+    temp = GPIOD->ODR;    // PD2 pull-dwn
+    temp &= 0xFFFB;
+    temp |= 0x0000;
+    GPIOD->ODR = temp;
+    
+#ifdef USE_EXTI_LINES
+    //Interrupts on:
+    // PB6 Rx bit bang pin
+    if (!RCC_AFIO_CLK)
+        RCC_AFIO_CLKEN;
+
+    // EXTI6 Select Port B & Pin6 for external interrupt
+    temp = AFIO->EXTICR[1];
+    temp &= ~AFIO_EXTICR2_EXTI6;
+    temp |= AFIO_EXTICR2_EXTI6_PB;
+    AFIO->EXTICR[1] = (unsigned short) temp;
+
+    // EXTI->IMR |= 0x00000001;    //Corresponding mask bit for interrupts EXTI2 EXTI4 EXTI13 EXTI15
+    // EXTI->EMR |= 0x00000000;    //Corresponding mask bit for events
+    EXTI->RTSR |= 0x00000000;
+    EXTI->FTSR |= EXTI_FTSR_TR6;    //Interrupt line on falling edge
+
+    // Enable NVIC for EXTIs
+    NVIC_EnableIRQ(EXTI9_5_IRQn);
+    NVIC_SetPriority(EXTI9_5_IRQn, 3);
+    
+#endif    // USE_EXTI_LINES
+#endif    // HARDWARE_VERSION_2_0
+
+#ifdef HARDWARE_VERSION_1_0    
     //--- GPIOA Low Side ------------------//
     // PA0 ENA_ENCODER
     // PA1 NC
@@ -241,6 +399,7 @@ void GpioInit (void)
     NVIC_SetPriority(EXTI9_5_IRQn, 3);
     
 #endif    // USE_EXTI_LINES
+#endif    // HARDWARE_VERSION_1_0
 }
 
 

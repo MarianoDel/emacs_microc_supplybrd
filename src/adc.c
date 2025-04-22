@@ -102,30 +102,24 @@ void AdcConfig (void)
     // ADC1->CR1 |= ADC_CR1_SCAN;
     // ADC1->CR2 |= ADC_CR2_EXTTRIG;    // with external trigger (can be soft trigger)    
     
-    // //set sampling time for each channel
-    // AdcSetChannelSampleTime(ADC_Channel_0, ADC_SampleTime_41_5Cycles);
-    // AdcSetChannelSampleTime(ADC_Channel_1, ADC_SampleTime_41_5Cycles);
-    // AdcSetChannelSampleTime(ADC_Channel_2, ADC_SampleTime_41_5Cycles);
-    // AdcSetChannelSampleTime(ADC_Channel_3, ADC_SampleTime_41_5Cycles);    
-    // AdcSetChannelSampleTime(ADC_Channel_6, ADC_SampleTime_41_5Cycles);
-    // AdcSetChannelSampleTime(ADC_Channel_7, ADC_SampleTime_41_5Cycles);
+    //set sampling time for each channel
+    AdcSetChannelSampleTime(ADC_Channel_2, ADC_SampleTime_41_5Cycles);
+    AdcSetChannelSampleTime(ADC_Channel_3, ADC_SampleTime_41_5Cycles);
+    AdcSetChannelSampleTime(ADC_Channel_10, ADC_SampleTime_41_5Cycles);
+    AdcSetChannelSampleTime(ADC_Channel_11, ADC_SampleTime_41_5Cycles);
+    AdcSetChannelSampleTime(ADC_Channel_12, ADC_SampleTime_41_5Cycles);
+    AdcSetChannelSampleTime(ADC_Channel_13, ADC_SampleTime_41_5Cycles);    
 
     // //set regular channel selection, start with 1
-    // AdcSetChannelSamplePosition(ADC_Channel_0, 1);
-    // AdcSetChannelSamplePosition(ADC_Channel_1, 2);
-    // AdcSetChannelSamplePosition(ADC_Channel_2, 3);
-    // AdcSetChannelSamplePosition(ADC_Channel_3, 4);
-    // AdcSetChannelSamplePosition(ADC_Channel_6, 5);    
-    // AdcSetChannelSamplePosition(ADC_Channel_7, 6);
-
-    // //set the quantity of channels to convert
-    // AdcSetChannelsQuantity(ADC_Channels_Qtty_6);
-
-    //set sampling time for each channel
-    AdcSetChannelSampleTime(ADC_Channel_4, ADC_SampleTime_239_5Cycles);
-    AdcSetChannelSampleTime(ADC_Channel_5, ADC_SampleTime_239_5Cycles);
-    AdcSetChannelSampleTime(ADC_Channel_6, ADC_SampleTime_239_5Cycles);
+    AdcSetChannelSamplePosition(ADC_Channel_2, 1);
+    AdcSetChannelSamplePosition(ADC_Channel_3, 2);
+    AdcSetChannelSamplePosition(ADC_Channel_10, 3);
+    AdcSetChannelSamplePosition(ADC_Channel_11, 4);
+    AdcSetChannelSamplePosition(ADC_Channel_12, 5);
+    AdcSetChannelSamplePosition(ADC_Channel_13, 6);
     
+    // //set the quantity of channels to convert
+    AdcSetChannelsQuantity(ADC_Channels_Qtty_6);
     
 #ifdef ADC_WITH_INT        
     //set interrupts
@@ -158,6 +152,15 @@ void AdcConfig (void)
 #endif
     
 }
+
+
+void AdcStart (void)
+{
+    ADC1->CR1 |= ADC_CR1_SCAN;    //convertir toda la secuencia de canales
+    ADC1->CR2 |= ADC_CR2_CONT;    //convertir en forma continua
+    ADC1->CR2 |= ADC_CR2_SWSTART | ADC_CR2_EXTTRIG;        //activo una primera conversion
+}
+
 
 #ifdef ADC_WITH_INT
 void ADC1_COMP_IRQHandler (void)

@@ -36,6 +36,10 @@
 #endif
 
 
+#define TIM3_CH2_DMA_ENABLE    (TIM3->DIER |= TIM_DIER_UDE)
+#define TIM3_CH2_DMA_DISABLE    (TIM3->DIER &= ~TIM_DIER_UDE)
+
+
 //--- Exported Functions ------------------------------
 void Wait_ms (unsigned short);
 

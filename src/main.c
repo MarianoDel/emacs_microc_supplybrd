@@ -18,16 +18,11 @@
 #include "dac.h"
 #include "tim.h"
 #include "gpio.h"
-#include "usart_channels.h"
 #include "usart.h"
-#include "i2c.h"
 
 #include "comms.h"
 #include "test_functions.h"
-#include "i2c_driver.h"
 #include "battery.h"
-
-#include "bit_bang.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -84,21 +79,18 @@ int main (void)
         SysTickError();
 
     // Hardware Tests
-    // TF_Hardware_Tests ();
+    TF_Hardware_Tests ();
 
     // --- main program inits. ---
+#ifdef HARDWARE_VERSION_2_0
     
+#endif
+
+    
+#ifdef HARDWARE_VERSION_1_0
     //-- ADC without DMA
     AdcConfig();
-    
-
-    // for (int i = 0; i < 10; i++)
-    // {
-    //     Wait_ms(1);
-    //     SYNC_CH1_ON;
-    //     Wait_ms(1);
-    //     SYNC_CH1_OFF;
-    // }
+    // AdcStart();
     
     supply_states_e supply_state = INIT;
     battery_status_e mains_status = STATUS_UNKNOWN;
@@ -282,12 +274,14 @@ int main (void)
         // Always check battery status
         Battery_Status ();
     }
+#endif    // HARDWARE_VERSION_1_0
 }
 
 //--- End of Main ---//
 
 
 // Other Module Functions ------------------------------------------------------
+#ifdef HARDWARE_VERSION_1_0
 #define SIZE_BUFFRX    124
 void Full_Working_Loop (void)
 {
@@ -520,6 +514,8 @@ void EXTI9_5_IRQHandler (void)
 // }
 
 
+#endif    // HARDWARE_VERSION_1_0
+
 void TimingDelay_Decrement(void)
 {
     if (wait_ms_var)
@@ -531,14 +527,13 @@ void TimingDelay_Decrement(void)
     if (timer_for_batt_report)
         timer_for_batt_report--;    
 
-    if (probe_detect_timer)
-        probe_detect_timer--;
+    // if (probe_detect_timer)
+        // probe_detect_timer--;
 
-    i2c_driver_timeouts ();
+    // i2c_driver_timeouts ();
     
     Battery_Timeout ();
 }
-
 
 void SysTickError (void)
 {

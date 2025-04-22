@@ -70,17 +70,20 @@ SRC += ./src/usart.c
 SRC += ./src/tim.c
 SRC += ./src/dma.c
 SRC += ./src/hard.c
-SRC += ./src/i2c.c
-# SRC += ./src/dac.c
+# SRC += ./src/i2c.c
+SRC += ./src/dac.c
 
 # SRC += ./src/dsp.c
-SRC += ./src/comms.c
+# SRC += ./src/comms.c
 SRC += ./src/utils.c
 SRC += ./src/test_functions.c
-SRC += ./src/i2c_driver.c
+# SRC += ./src/i2c_driver.c
+
+SRC += ./src/neopixel.c
+SRC += ./src/neopixel_driver.c
 
 SRC += ./src/battery.c
-SRC += ./src/bit_bang.c
+# SRC += ./src/bit_bang.c
 # SRC += ./src/signals.c
 # SRC += ./src/errors.c
 
