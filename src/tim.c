@@ -92,31 +92,117 @@ void TIM1_Init (void)
     TIM1->SMCR = 0x0000;
 
     // TIM1->CCMR1 = 0x0060;    //CH1 output PWM mode 2 (channel active TIM1->CNT < TIM1->CCR1)
-    TIM1->CCMR1 = 0x0000; 
-    TIM1->CCMR2 = 0x2100;    // CH4 input on TI4 filter fclk / 4
+    TIM1->CCMR1 = 0x6060; 
+    TIM1->CCMR2 = 0x0060;
     // TIM1->CCER = 0x0000;
     TIM1->BDTR = 0x0000;
-    TIM1->CCER |= TIM_CCER_CC4P | TIM_CCER_CC4E;    // CH4 input inverted
+    TIM1->CCER |= TIM_CCER_CC3E | TIM_CCER_CC2E | TIM_CCER_CC1E;    // CH4 input inverted
     // TIM1->BDTR |= TIM_BDTR_MOE;
 
-    TIM1->ARR = DUTY_100_PERCENT - 1;    // 1000 pts -> 7.2KHz
-    TIM1->PSC = 9;    // 13.88us tick
+    TIM1->ARR = 1000;
+    TIM1->PSC = 64 - 1;    // 13.88us tick
     
     TIM1->CNT = 0;
-
+    TIM1->CCR2 = 200;
+    TIM1->CCR3 = 300;    
+    TIM1->BDTR |= TIM_BDTR_MOE;
+    
     // Set ints and Enable timer
-    TIM1->DIER |= TIM_DIER_UIE | TIM_DIER_CC4IE;
+    // TIM1->DIER |= TIM_DIER_UIE | TIM_DIER_CC4IE;
     TIM1->CR1 |= TIM_CR1_CEN;
 
     // NVIC 
     // Timer1 Update event Int
-    NVIC_EnableIRQ(TIM1_UP_IRQn);
-    NVIC_SetPriority(TIM1_UP_IRQn, 4);
+    // NVIC_EnableIRQ(TIM1_UP_IRQn);
+    // NVIC_SetPriority(TIM1_UP_IRQn, 4);
 
     // Timer1 CH4 input capture
-    NVIC_EnableIRQ(TIM1_CC_IRQn);
-    NVIC_SetPriority(TIM1_CC_IRQn, 8);
+    // NVIC_EnableIRQ(TIM1_CC_IRQn);
+    // NVIC_SetPriority(TIM1_CC_IRQn, 8);
     
+}
+
+
+void TIM1_Init_Master_Output_Disable (void)
+{
+    if (!RCC_TIM1_CLK)
+        RCC_TIM1_CLKEN;
+
+    // Base timer config
+    TIM1->CR1 = 0x00;        //clk int / 1;
+    TIM1->CR2 = 0x00;
+
+    // Master config
+    TIM1->CR2 |= TIM_CR2_MMS_2 | TIM_CR2_MMS_0;    // TRG0 to OC2REF    
+    // TIM1->CR2 |= TIM_CR2_MMS_2;    // TRG0 to OC1REF
+    // TIM1->CR2 |= TIM_CR2_MMS_1;    // TRG0 to UEV    
+    // Slave config
+    TIM1->SMCR = 0x0000;
+
+    // TIM1->CCMR1 = 0x0070;    //CH1 output PWM mode 2 (channel inactive TIM1->CNT < TIM1->CCR1)
+    // TIM1->CCMR1 = 0x6060;    //CH1 output PWM mode 1 (channel active TIM1->CNT < TIM1->CCR1)
+    // TIM1->CCMR1 = 0x7460;    //CH1 output PWM mode 1 (channel active TIM1->CNT < TIM1->CCR1)
+    // TIM1->CCMR1 = 0x7060;    //CH1 output PWM mode 1 (channel active TIM1->CNT < TIM1->CCR1)    
+    TIM1->CCMR1 = 0x1060;    //CH1 output PWM mode 1 (channel active TIM1->CNT < TIM1->CCR1)        
+                             //CH2 active level on match
+    TIM1->CCMR2 = 0x0000;
+
+    // TIM1->CCER |= TIM_CCER_CC2E | TIM_CCER_CC1E | TIM_CCER_CC1P;    // CH1 output
+    TIM1->CCER |= TIM_CCER_CC2E | TIM_CCER_CC1E | TIM_CCER_CC1P;    // CH1 output inv Ch2
+    // TIM1->CCER |= TIM_CCER_CC2E | TIM_CCER_CC1E;    // CH1 output Ch2       
+    // TIM1->CCER |= TIM_CCER_CC1E;    // CH1 output    
+    TIM1->BDTR |= TIM_BDTR_MOE;
+
+    TIM1->PSC = 64 - 1;
+    TIM1->ARR = 1000;    // 1000 pts -> 7.2KHz
+    TIM1->CCR2 = 500;
+    TIM1->CNT = 0;
+
+    TIM1->EGR |= TIM_EGR_UG;
+    // Set ints and Enable timer
+    // TIM1->DIER |= TIM_DIER_UIE | TIM_DIER_CC4IE;
+    TIM1->CR1 |= TIM_CR1_CEN;
+
+    // NVIC 
+    // Timer1 Update event Int
+    // NVIC_EnableIRQ(TIM1_UP_IRQn);
+    // NVIC_SetPriority(TIM1_UP_IRQn, 4);
+
+    // Timer1 CH4 input capture
+    // NVIC_EnableIRQ(TIM1_CC_IRQn);
+    // NVIC_SetPriority(TIM1_CC_IRQn, 8);
+}
+
+
+void TIM1_Output_Enable (void)
+{
+    unsigned int temp = 0;
+
+    //PA8 Alternative (TIM1_CH1), default to alternative
+    temp = GPIOA->CRH;
+    temp &= 0xFFFFFFF0;
+    temp |= 0x0000000F;
+    GPIOA->CRH = temp;
+    
+}
+
+
+void TIM1_Output_Disable (void)
+{
+    unsigned int temp = 0;
+
+    //PA8 Alternative (TIM1_CH1), revert to default
+    temp = GPIOA->CRH;
+    temp &= 0xFFFFFFF0;
+    temp |= 0x00000000;
+    GPIOA->CRH = temp;
+    
+}
+
+
+void TIM1_Update_CH1 (unsigned short a)
+{
+    TIM1->CCR1 = a;
 }
 
 
@@ -223,6 +309,34 @@ void TIM1_CC_IRQHandler (void)
 
 //     TIM1->CCR1 = 0;
 // }
+
+
+void TIM2_Init (void)
+{
+    if (!RCC_TIM2_CLK)
+        RCC_TIM2_CLKEN;
+
+    // Base timer config
+    TIM2->CR1 |= TIM_CR1_OPM;        //clk int / 1;
+    TIM2->CR2 |= TIM_CR2_MMS_1;    // TRG0 to UEV    
+    TIM2->SMCR |= TIM_SMCR_MSM | TIM_SMCR_SMS_2 | TIM_SMCR_SMS_1;    // master/slave & trigger TRG0
+
+    TIM2->CCMR1 = 0x0000; 
+    TIM2->CCMR2 = 0x0000;
+    // TIM2->CCMR1 = 0x0060;    //CH1 output PWM mode 2 (channel active TIM2->CNT < TIM2->CCR1)
+    // TIM2->CCER = 0x0000;
+    // TIM2->BDTR = 0x0000;
+    // TIM2->CCER |= TIM_CCER_CC4P | TIM_CCER_CC4E;    // CH4 input inverted
+    // TIM2->BDTR |= TIM_BDTR_MOE;
+
+    TIM2->PSC = 64 - 1;
+    TIM2->ARR = 500 - 1;
+    TIM2->CNT = 0;
+
+    // Set ints and Enable timer
+    // TIM2->DIER |= TIM_DIER_UIE | TIM_DIER_CC4IE;
+    TIM2->CR1 |= TIM_CR1_CEN;
+}
 
 
 void TIM3_Init (void)
@@ -551,12 +665,79 @@ void TIM8_Init (void)
 }
 
 
+void TIM8_Init_Slave_Output_Disable (void)
+{
+//    Counter Register (TIMx_CNT)
+//    Prescaler Register (TIMx_PSC)
+//    Auto-Reload Register (TIMx_ARR)
+//    The counter clock frequency CK_CNT is equal to fCK_PSC / (PSC[15:0] + 1)
+//
+    //---- Clk ----//
+    if (!RCC_TIM8_CLK)
+        RCC_TIM8_CLKEN;
+
+    //--- Config ----//
+    TIM8->CR1 = 0x0000;        //clk int / 1; upcounting;
+    TIM8->CR2 = 0x0000;
+
+    // slave mode, trigger mode in ITR0
+    TIM8->SMCR |= TIM_SMCR_SMS_2 | TIM_SMCR_SMS_1;    // trigger start
+    
+    TIM8->CCMR1 = 0x0060;    //CH1 output PWM mode 2 (channel active CNT < CCR1)
+    TIM8->CCMR2 = 0x0000;    //
+
+    // ch1 enabled
+    TIM8->CCER = 0;    // start on a know state
+    TIM8->BDTR = 0;
+    TIM8->CCER |= TIM_CCER_CC1E | TIM_CCER_CC1P;
+    // TIM8->CCER |= TIM_CCER_CC1E;    
+    TIM8->BDTR |= TIM_BDTR_MOE;
+    
+    TIM8->PSC = 64 - 1;
+    TIM8->ARR = 1000;
+    TIM8->CCR1 = 0;
+    TIM8->CNT = 0;
+
+    TIM8->EGR |= TIM_EGR_UG;
+    
+    // Wait trigger for timer enable
+    // TIM8->CR1 |= TIM_CR1_CEN;
+}
+
+
 void TIM8_Stop (void)
 {
+    TIM8->CR1 &= ~(TIM_CR1_CEN);
     TIM8->CR1 = 0x0000;        //clk int / 1; upcounting;
     TIM8->CR2 = 0x0000;
     TIM8->CCER = 0;
     TIM8->BDTR = 0;    
+}
+
+
+void TIM8_Output_Enable (void)
+{
+    unsigned int temp = 0;
+
+    // PC6 Alterantive (TIM8_CH1), default to alternative
+    temp = GPIOC->CRL;
+    temp &= 0xF0FFFFFF;
+    temp |= 0x0F000000;
+    GPIOC->CRL = temp;
+    
+}
+
+
+void TIM8_Output_Disable (void)
+{
+    unsigned int temp = 0;
+
+    // PC6 Alterantive (TIM8_CH1), revert to default
+    temp = GPIOC->CRL;
+    temp &= 0xF0FFFFFF;
+    temp |= 0x00000000;
+    GPIOC->CRL = temp;
+
 }
 
 

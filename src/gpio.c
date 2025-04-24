@@ -119,7 +119,7 @@ void GpioInit (void)
 
     //--- GPIOA High Side ------------------//
     //PA8 Alternative (TIM1_CH1), starts on default
-    //PA9 NC
+    //PA9 Alternative (TIM1_CH2)
     //PA10 NC
     //PA11 NC
     //PA12 Alternative TIM1_ETR input
@@ -127,10 +127,15 @@ void GpioInit (void)
     //PA14 NC
     //PA15 NC
     temp = GPIOA->CRH;
-    // temp &= 0xFFF0FFF0;
-    // temp |= 0x0004000F;
-    temp &= 0xFFF0FFFF;
-    temp |= 0x00040000;
+
+    // PA8 starts alternative
+    // temp &= 0xFFF0FF00;
+    // temp |= 0x000400AF;
+
+    // PA8 starts on default
+    temp &= 0xFFF0FF0F;
+    temp |= 0x000400A0;
+
     GPIOA->CRH = temp;
 
     //--- GPIOA Pull-Up Pull-Dwn ------------------//
@@ -184,8 +189,10 @@ void GpioInit (void)
     // PC7 NC
 
     temp = GPIOC->CRL;
+    // PC6 starts alternative
     // temp &= 0xF0FF0000;
     // temp |= 0x0F000000;
+    // PC6 starts on default
     temp &= 0xFFFF0000;
     temp |= 0x00000000;
     GPIOC->CRL = temp;

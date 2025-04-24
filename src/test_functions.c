@@ -48,6 +48,7 @@ void TF_Led_OnOff (void);
 void TF_Usart3_Loop (void);
 void TF_Usart3_Analog (void);
 void TF_Tim3_Ch2_NeoPixel_1_Enable (void);
+void TF_Tim1_Master_Tim8_Slave (void);
 #endif
 
 #ifdef HARDWARE_VERSION_1_0
@@ -89,7 +90,8 @@ void TF_Hardware_Tests (void)
     // TF_Led_OnOff ();
     // TF_Usart3_Loop ();
     // TF_Usart3_Analog ();
-    TF_Tim3_Ch2_NeoPixel_1_Enable ();
+    // TF_Tim3_Ch2_NeoPixel_1_Enable ();
+    TF_Tim1_Master_Tim8_Slave ();
 }
 
 
@@ -275,6 +277,34 @@ void TF_Tim3_Ch2_NeoPixel_1_Enable (void)
 	Led_Off();
 	Wait_ms(1900);	
     }
+}
+
+
+void TF_Tim1_Master_Tim8_Slave (void)
+{
+    Wait_ms(10000);
+    
+    // slave clock enabled before master
+    // Wait_ms(2);
+    TIM1_Init_Master_Output_Disable ();
+    // TIM1_Init();    
+    // TIM2_Init();
+    TIM8_Init_Slave_Output_Disable ();
+
+    TIM1_Update_CH1 (0);
+    TIM8_Update_CH1 (0);
+
+    Wait_ms(2);
+    
+    TIM1_Output_Enable(); 
+    TIM8_Output_Enable();   
+
+    TIM1_Update_CH1 (100);
+    TIM8_Update_CH1 (100);
+
+    Led_On();
+    
+    while (1);
 }
 
 
