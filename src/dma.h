@@ -11,6 +11,8 @@
 #define _DMA_H_
 
 //--- Defines for configuration ----------------
+#include "stm32f10x.h"
+
 // #define DMA_WITH_INTERRUPT
 
 //--- Exported Macros ---//

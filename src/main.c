@@ -22,29 +22,30 @@
 
 #include "comms.h"
 #include "test_functions.h"
-#include "battery.h"
+
+#include "supply.h"
 
 #include <stdio.h>
 #include <string.h>
 
 
 // Private Types Constants and Macros ------------------------------------------
-typedef enum {
-    INIT,
-    MAINS_SUPPLY,
-    BATTERY_GOOD,
-    BATTERY_LOW
+// typedef enum {
+//     INIT,
+//     MAINS_SUPPLY,
+//     BATTERY_GOOD,
+//     BATTERY_LOW
     
     
-} supply_states_e;
+// } supply_states_e;
 
 // Externals -------------------------------------------------------------------
 //--- Externals from timers
 volatile unsigned short timer_standby = 0;
-volatile unsigned short timer_for_batt_report = 0;
+// volatile unsigned short timer_for_batt_report = 0;
 volatile unsigned short wait_ms_var = 0;
-volatile unsigned char probe_detect_timer = 0;
-volatile unsigned short probe_detect_filter = 0;
+// volatile unsigned char probe_detect_timer = 0;
+// volatile unsigned short probe_detect_filter = 0;
 
 //--- Externals from adc
 volatile unsigned short adc_ch [ADC_CHANNEL_QUANTITY];
@@ -79,12 +80,40 @@ int main (void)
         SysTickError();
 
     // Hardware Tests
-    TF_Hardware_Tests ();
+    // TF_Hardware_Tests ();
 
     // --- main program inits. ---
 #ifdef HARDWARE_VERSION_2_0
+    // --- start peripherals
+    // Init ADC with DMA
+    DMAConfig ();
+    DMA_ENABLE;
     
-#endif
+    AdcConfig();
+    AdcStart();
+    
+    //-- DAC init for signal generation
+    DAC_Config ();
+    DAC_Output1(0);
+
+    // Init Usart3
+    Usart3Config();
+
+    // Init Tim3 for neopixel
+    TIM3_Init();
+
+    // Init Tim1 Tim8 for Boost
+    // TIM1_Init_Master_Output_Disable ();
+    // TIM8_Init_Slave_Output_Disable ();
+    
+    // --- start supply manager
+    Usart3Send("\r\n -- Supply Board ver 2.0 init --\r\n");
+    Supply_Status_Reset ();
+    while (1)
+    {
+	Supply_Status();
+    }
+#endif    // END OF HARDWARE_VERSION_2_0
 
     
 #ifdef HARDWARE_VERSION_1_0
@@ -524,15 +553,15 @@ void TimingDelay_Decrement(void)
     if (timer_standby)
         timer_standby--;
 
-    if (timer_for_batt_report)
-        timer_for_batt_report--;    
+    // if (timer_for_batt_report)
+    //     timer_for_batt_report--;    
 
     // if (probe_detect_timer)
         // probe_detect_timer--;
 
     // i2c_driver_timeouts ();
     
-    Battery_Timeout ();
+    Supply_Timeouts ();
 }
 
 void SysTickError (void)

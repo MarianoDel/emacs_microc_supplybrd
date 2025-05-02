@@ -44,6 +44,7 @@
 void Wait_ms (unsigned short);
 
 void TIM1_Init (void);
+void TIM1_DeInit (void);
 void TIM1_Init_Master_Output_Disable (void);
 void TIM1_Output_Enable (void);
 void TIM1_Output_Disable (void);
@@ -86,6 +87,7 @@ void TIM7_Start (void);
 
 // Timer 8 Functions
 void TIM8_Init (void);
+void TIM8_DeInit (void);
 void TIM8_Init_Slave_Output_Disable (void);
 void TIM8_Stop (void);
 void TIM8_Output_Enable (void);

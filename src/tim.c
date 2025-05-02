@@ -12,7 +12,6 @@
 #include "tim.h"
 #include "stm32f10x.h"
 #include "hard.h"
-#include "bit_bang.h"
 
 
 // Module Private Types Constants and Macros -----------------------------------
@@ -145,6 +144,7 @@ void TIM1_Init_Master_Output_Disable (void)
     // TIM1->CCMR1 = 0x7060;    //CH1 output PWM mode 1 (channel active TIM1->CNT < TIM1->CCR1)    
     TIM1->CCMR1 = 0x1060;    //CH1 output PWM mode 1 (channel active TIM1->CNT < TIM1->CCR1)        
                              //CH2 active level on match
+    TIM1->CCMR1 |= TIM_CCMR1_OC1CE;
     TIM1->CCMR2 = 0x0000;
 
     // TIM1->CCER |= TIM_CCER_CC2E | TIM_CCER_CC1E | TIM_CCER_CC1P;    // CH1 output
@@ -153,7 +153,7 @@ void TIM1_Init_Master_Output_Disable (void)
     // TIM1->CCER |= TIM_CCER_CC1E;    // CH1 output    
     TIM1->BDTR |= TIM_BDTR_MOE;
 
-    TIM1->PSC = 64 - 1;
+    TIM1->PSC = 0;
     TIM1->ARR = 1000;    // 1000 pts -> 7.2KHz
     TIM1->CCR2 = 500;
     TIM1->CNT = 0;
@@ -223,6 +223,17 @@ void TIM1_CC_IRQHandler (void)
         TIM1->SR &= ~TIM_SR_CC4IF;
 
     
+}
+
+
+void TIM1_DeInit (void)
+{
+    TIM1->CR1 &= ~(TIM_CR1_CEN);
+    TIM1->CCMR1 = TIM_CCMR1_OC2M_2;
+    TIM1->EGR |= TIM_EGR_UG;
+    
+    if (RCC_TIM1_CLK)
+        RCC_TIM1_CLKDIS;
 }
 
 
@@ -684,6 +695,7 @@ void TIM8_Init_Slave_Output_Disable (void)
     TIM8->SMCR |= TIM_SMCR_SMS_2 | TIM_SMCR_SMS_1;    // trigger start
     
     TIM8->CCMR1 = 0x0060;    //CH1 output PWM mode 2 (channel active CNT < CCR1)
+    TIM8->CCMR1 |= TIM_CCMR1_OC1CE;
     TIM8->CCMR2 = 0x0000;    //
 
     // ch1 enabled
@@ -693,7 +705,7 @@ void TIM8_Init_Slave_Output_Disable (void)
     // TIM8->CCER |= TIM_CCER_CC1E;    
     TIM8->BDTR |= TIM_BDTR_MOE;
     
-    TIM8->PSC = 64 - 1;
+    TIM8->PSC = 0;
     TIM8->ARR = 1000;
     TIM8->CCR1 = 0;
     TIM8->CNT = 0;
@@ -738,6 +750,14 @@ void TIM8_Output_Disable (void)
     temp |= 0x00000000;
     GPIOC->CRL = temp;
 
+}
+
+
+void TIM8_DeInit (void)
+{
+    TIM8->CR1 &= ~(TIM_CR1_CEN);
+    if (RCC_TIM8_CLK)
+        RCC_TIM8_CLKDIS;
 }
 
 

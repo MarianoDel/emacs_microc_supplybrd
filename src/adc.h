@@ -32,6 +32,13 @@
 #define Sense_BAT_CH2    adc_ch[3]
 #define Sense_BAT_CH3    adc_ch[4]
 #define Sense_BAT_CH4    adc_ch[5]
+
+#define Sense_MAINS    adc_ch[1]
+#define Sense_BATT1    adc_ch[2]
+#define Sense_BATT2    adc_ch[3]
+#define Sense_BATT3    adc_ch[4]
+#define Sense_BATT4    adc_ch[5]
+
 #define ADC_CHANNEL_QUANTITY    6
 #define ADC_LAST_CHANNEL_QUANTITY    (ADC_CHANNEL_QUANTITY - 1)
 // #define SENSE_POWER    adc_ch[0]

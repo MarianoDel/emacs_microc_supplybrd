@@ -34,7 +34,7 @@
 
 
 // Externals -------------------------------------------------------------------
-// extern volatile unsigned short adc_ch [];
+extern volatile unsigned short adc_ch [];
 
 
 #ifdef ADC_WITH_INT
