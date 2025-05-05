@@ -111,7 +111,9 @@ int main (void)
     Supply_Status_Reset ();
     while (1)
     {
-	Supply_Status();
+	Supply_Status ();
+
+	Comms_Update ();
     }
 #endif    // END OF HARDWARE_VERSION_2_0
 

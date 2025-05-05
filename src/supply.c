@@ -59,13 +59,18 @@ unsigned short batt4_filtered = 0;
 
 // Module Private Functions ----------------------------------------------------
 void Supply_Filters_Update (void);
+
 unsigned short Supply_Get_Charge_Batt (void);
 unsigned short Supply_Get_Mains (void);
+unsigned short Supply_Get_Batt (unsigned char batt_num);
+
 void Supply_Neopixel_Charging_With_Mains (void);
 void Supply_Neopixel_With_Batt (void);
 void Supply_Set_Neopixel_Voltage (pixel_t * ppix, unsigned short batt_volts);
 unsigned short Supply_Get_Charge_Batt (void);
 void Supply_Neopixel_Shutdown (void);
+
+void Supply_Send_Voltage_SM (void);
 
 
 // Module Functions ------------------------------------------------------------
@@ -279,7 +284,7 @@ void Supply_Status (void)
     }
 
     Supply_Filters_Update ();
-
+    Supply_Send_Voltage_SM ();
 }
 
 
@@ -346,6 +351,23 @@ unsigned short Supply_Get_Mains (void)
 unsigned short Supply_Get_Boost (void)
 {
     return boost_filtered;
+}
+
+
+unsigned short Supply_Get_Batt (unsigned char batt_num)
+{
+    unsigned short a = 0;
+    
+    if (batt_num == 3)
+	a = batt4_filtered;
+    else if (batt_num == 2)
+	a = batt3_filtered;
+    else if (batt_num == 1)
+	a = batt2_filtered;
+    else
+	a = batt1_filtered;
+
+    return a;
 }
 
 
@@ -481,38 +503,159 @@ unsigned short Supply_Get_Charge_Batt (void)
     return batt1_filtered;
 }
 
-// void Battery_Convert_To_Volts (unsigned short adc_value,
-//                                unsigned char * v_int,
-//                                unsigned char * v_dec)
-// {
-//     // Rmult is 0.211
-//     // Vx = adc * 3.3 
-//     float fcalc = 1.0;
 
-//     fcalc = adc_value * 15.64;
-//     // fcalc = adc_value * 15.08;    // adjust 8.1 -> 7.81
-//     fcalc = fcalc / 4095.;
-
-//     *v_int = (unsigned char) fcalc;
-//     fcalc = fcalc - *v_int;
-//     fcalc = fcalc * 10;
-//     *v_dec = (unsigned char) fcalc;    
-// }
-
-
-// char Battery_Convert_Status_From_Adc (unsigned short adc_batt)
-// {
-//     char a = '0';
+char buff_volts[100];
+unsigned char supply_send_voltage = 0;
+void Supply_Send_Voltage_SM (void)
+{
+    unsigned char vint = 0;
+    unsigned char vdec = 0;
     
-//     if (adc_batt > BATT_ADC_3)
-//         a = '4';
-//     else if (adc_batt > BATT_ADC_2)
-//         a = '3';
-//     else if (adc_batt > BATT_ADC_1)
-//         a = '2';
-//     else if (adc_batt > BATT_ADC_0)
-//         a = '1';
+    switch (supply_send_voltage)
+    {
+    case 0:
+	break;
 
-//     return a;
-// }
+    case 1:
+	// mode 0 unknow
+	if (Supply_Get_Mode() == SUPPLY_MODE_BATT)
+	{
+	    Usart3Send("\r\n");
+	    Usart3Send("supply battery ");
+	}
+	else if (Supply_Get_Mode() == SUPPLY_MODE_MAINS)
+	{
+	    Usart3Send("\r\n");	    
+	    Usart3Send("supply mains ");
+	}
+	else
+	{
+	    supply_send_voltage = 0;
+	    break;
+	}
+	    
+	supply_send_voltage++;
+	break;
+
+    case 2:
+	// send 12v input
+	Supply_Convert_To_Volts (Supply_Get_Mains(),
+				 &vint,
+				 &vdec);
+
+	sprintf(buff_volts, "%02d.%d ", vint, vdec);
+	Usart3Send(buff_volts);
+	supply_send_voltage++;
+	break;
+
+    case 3:
+	// send boost
+	Supply_Convert_To_Volts (Supply_Get_Boost(),
+				 &vint,
+				 &vdec);
+
+	sprintf(buff_volts, "%02d.%d ", vint, vdec);
+	Usart3Send(buff_volts);
+	
+	supply_send_voltage++;
+	break;
+
+    case 4:
+	// send bat1
+	Supply_Convert_To_Volts (Supply_Get_Batt(0),
+				 &vint,
+				 &vdec);
+
+	sprintf(buff_volts, "%02d.%d ", vint, vdec);
+	Usart3Send(buff_volts);
+	
+	supply_send_voltage++;
+	break;
+
+    case 5:
+	// send bat2
+	Supply_Convert_To_Volts (Supply_Get_Batt(1),
+				 &vint,
+				 &vdec);
+
+	sprintf(buff_volts, "%02d.%d ", vint, vdec);
+	Usart3Send(buff_volts);
+	
+	supply_send_voltage++;
+	break;
+
+    case 6:
+	// send bat3
+	Supply_Convert_To_Volts (Supply_Get_Batt(2),
+				 &vint,
+				 &vdec);
+
+	sprintf(buff_volts, "%02d.%d ", vint, vdec);
+	Usart3Send(buff_volts);
+	
+	supply_send_voltage++;
+	break;
+
+    case 7:
+	// send bat4
+	Supply_Convert_To_Volts (Supply_Get_Batt(3),
+				 &vint,
+				 &vdec);
+
+	sprintf(buff_volts, "%02d.%d\r\n", vint, vdec);
+	Usart3Send(buff_volts);
+	
+	supply_send_voltage = 0;
+	break;
+	
+    default:
+	supply_send_voltage = 0;
+	break;
+    }
+}
+
+
+void Supply_Send_Voltage_Start (void)
+{
+    if (!supply_send_voltage)
+	supply_send_voltage = 1;
+}
+
+
+void Supply_Convert_To_Volts (unsigned short adc_value,
+			      unsigned char * v_int,
+			      unsigned char * v_dec)
+{
+    // Rmult is 0.211
+    // Vx = adc * 3.3 
+    float fcalc = 1.0;
+
+    fcalc = adc_value * 15.64;
+    // fcalc = adc_value * 15.08;    // adjust 8.1 -> 7.81
+    fcalc = fcalc / 4095.;
+
+    *v_int = (unsigned char) fcalc;
+    fcalc = fcalc - *v_int;
+    fcalc = fcalc * 10;
+    *v_dec = (unsigned char) fcalc;    
+}
+
+
+// 0 unknow
+// 1 batt
+// 2 mains
+unsigned char Supply_Get_Mode (void)
+{
+    unsigned char a = SUPPLY_MODE_UNKNOW;
+    
+    if ((supply_state == STANDBY_WITH_BATT) ||
+	(supply_state == POWERON_WITH_BATT))
+	a = SUPPLY_MODE_BATT;
+    else if ((supply_state == STANDBY_WITH_MAINS) ||
+	     (supply_state == POWERON_WITH_MAINS))
+	a = SUPPLY_MODE_MAINS;
+
+    return a;
+}
+
 //--- end of file ---//

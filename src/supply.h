@@ -35,6 +35,9 @@
 // for tests only
 // #define SUPPLY_DISCONNECT_VOLTAGE    1964    // 7.5V
 // #define SUPPLY_CONNECT_VOLTAGE    2094    // 8V
+#define SUPPLY_MODE_UNKNOW    0
+#define SUPPLY_MODE_BATT    1
+#define SUPPLY_MODE_MAINS    2
 
 
 // Exported Module Functions ---------------------------------------------------
@@ -42,6 +45,11 @@ void Supply_Status_Reset (void);
 void Supply_Status (void);
 void Supply_Timeouts (void);
 unsigned short Supply_Get_Boost (void);
+void Supply_Send_Voltage_Start (void);
+void Supply_Convert_To_Volts (unsigned short adc_value,
+			      unsigned char * v_int,
+			      unsigned char * v_dec);
+unsigned char Supply_Get_Mode (void);
 
 
 #endif    /* _SUPPLY_H_ */

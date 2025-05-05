@@ -9,15 +9,11 @@
 
 // Includes --------------------------------------------------------------------
 #include "comms.h"
-#include "answers_defs.h"
+// #include "answers_defs.h"
 #include "hard.h"
-// #include "adc.h"
-
-#include "usart_channels.h"
+#include "supply.h"
 #include "usart.h"
-#include "bit_bang.h"
 
-#include "i2c_driver.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -27,7 +23,7 @@
 // Module Private Types Constants and Macros -----------------------------------
 char s_ans_ok [] = {"ok\n"};
 char s_ans_nok [] = {"nok\n"};
-#define SIZEOF_LOCAL_BUFF    128
+#define SIZEOF_COMMS_BUFF    128
 #define COMMS_TT_RELOAD    3000
 
 
@@ -35,8 +31,7 @@ char s_ans_nok [] = {"nok\n"};
 
 
 // Globals ---------------------------------------------------------------------
-char local_buff [SIZEOF_LOCAL_BUFF];
-volatile unsigned short comms_timeout = 0;
+char comms_buff [SIZEOF_COMMS_BUFF];
     
 
 // Module Private Functions ----------------------------------------------------
@@ -44,179 +39,53 @@ static void Comms_Messages (char * msg_str);
 
 
 // Module Functions ------------------------------------------------------------
-void Comms_Timeouts (void)
-{
-    if (comms_timeout)
-        comms_timeout--;
-}
-
-
-unsigned char Comms_Rpi_Answering (void)
-{
-    if (comms_timeout)
-        return 1;
-    
-    return 0;
-}
-
-
 void Comms_Update (void)
 {
-    if (UsartRpiHaveData())
+    if (Usart3HaveData())
     {
-        UsartRpiHaveDataReset();
-        UsartRpiReadBuffer(local_buff, SIZEOF_LOCAL_BUFF);
-        Comms_Messages(local_buff);
-
-        comms_timeout = COMMS_TT_RELOAD;
+        Usart3HaveDataReset();
+        Usart3ReadBuffer(comms_buff, SIZEOF_COMMS_BUFF);
+        Comms_Messages(comms_buff);
     }
 }
 
 
 static void Comms_Messages (char * msg_str)
 {
-    char buff [128];    
+    // char buff [128];    
     
-    // check if its own, broadcast or channel
-    // for channel 1
-    if (strncmp (msg_str, "ch1", sizeof("ch1") - 1) == 0)
+    if (strncmp (msg_str, "get all voltages", sizeof("get all voltages") - 1) == 0)
     {
-        // check enable or bridged
-        if (strncmp ((msg_str + 4), "enable", sizeof("enable") - 1) == 0)
-        {
-            Ena_Ch1_On();
-            UsartRpiSend(s_ans_ok);
-        }
-        else if (strncmp ((msg_str + 4), "disable", sizeof("disable") - 1) == 0)
-        {
-            Ena_Ch1_Off();
-            UsartRpiSend(s_ans_ok);
-        }
-        else    // bridge the message
-        {
-            sprintf(buff, "%s\n", (msg_str + 4));
-            UsartChannel1Send (buff);
-        }
-    }
-    else if (strncmp (msg_str, "ch2", sizeof("ch2") - 1) == 0)
-    {
-        // check enable or bridged
-        if (strncmp ((msg_str + 4), "enable", sizeof("enable") - 1) == 0)
-        {
-            Ena_Ch2_On();
-            UsartRpiSend(s_ans_ok);
-        }
-        else if (strncmp ((msg_str + 4), "disable", sizeof("disable") - 1) == 0)
-        {
-            Ena_Ch2_Off();
-            UsartRpiSend(s_ans_ok);
-        }
-        else    // bridge the message
-        {
-            sprintf(buff, "%s\n", (msg_str + 4));
-            UsartChannel2Send (buff);
-        }
-    }
-    else if (strncmp (msg_str, "ch3", sizeof("ch3") - 1) == 0)
-    {
-        // check enable or bridged
-        if (strncmp ((msg_str + 4), "enable", sizeof("enable") - 1) == 0)
-        {
-            Ena_Ch3_On();
-            UsartRpiSend(s_ans_ok);
-        }
-        else if (strncmp ((msg_str + 4), "disable", sizeof("disable") - 1) == 0)
-        {
-            Ena_Ch3_Off();
-            UsartRpiSend(s_ans_ok);
-        }
-        else    // bridge the message
-        {
-            sprintf(buff, "%s\n", (msg_str + 4));
-            UsartChannel3Send (buff);
-        }
-    }
-    else if (strncmp (msg_str, "ch4", sizeof("ch4") - 1) == 0)
-    {
-        // check enable or bridged
-        if (strncmp ((msg_str + 4), "enable", sizeof("enable") - 1) == 0)
-        {
-            Ena_Ch4_On();
-            UsartRpiSend(s_ans_ok);
-        }
-        else if (strncmp ((msg_str + 4), "disable", sizeof("disable") - 1) == 0)
-        {
-            Ena_Ch4_Off();
-            UsartRpiSend(s_ans_ok);
-        }
-        else    // bridge the message
-        {
-            sprintf(buff, "%s\n", (msg_str + 4));
-            UsartChannel4Send (buff);
-        }
-    }
-    else if (strncmp (msg_str, "chf", sizeof("chf") - 1) == 0)
-    {
-        // check enable or bridged
-        if (strncmp ((msg_str + 4), "enable", sizeof("enable") - 1) == 0)
-        {
-            Ena_Ch1_On();
-            Ena_Ch2_On();
-            Ena_Ch3_On();
-            Ena_Ch4_On();            
-            UsartRpiSend(s_ans_ok);
-        }
-        else if (strncmp ((msg_str + 4), "disable", sizeof("disable") - 1) == 0)
-        {
-            Ena_Ch1_Off();
-            Ena_Ch2_Off();
-            Ena_Ch3_Off();
-            Ena_Ch4_Off();            
-            UsartRpiSend(s_ans_ok);
-        }
-        else    // bridge the message
-        {
-            sprintf(buff, "%s\n", (msg_str + 4));
-            UsartChannel1Send (buff);
-            UsartChannel2Send (buff);
-            UsartChannel3Send (buff);
-            UsartChannel4Send (buff);            
-        }
+	Supply_Send_Voltage_Start ();
     }
 
-    else if (strncmp (msg_str, "encod", sizeof("encod") - 1) == 0)
+    else if (strncmp (msg_str, "get batt voltage", sizeof("get batt voltage") - 1) == 0)
     {
-        char * pmsg = msg_str + sizeof("encod") - 1;
-        
-        // check enable if valid number
-        if ((*pmsg >= '0') && (*pmsg <= '7'))
-        {
-            if ((*(pmsg + 1) == ' ') &&
-                (*(pmsg + 2) >= '0') &&
-                (*(pmsg + 2) <= ';'))
-            {
-                char buff_encod [30] = { 0 };
-                // "enc 0 1\n"
-                sprintf(buff_encod, "enc %c %c\n", *(pmsg + 0), *(pmsg + 2));
-                Bit_Bang_Tx_Send(buff_encod);
-                // Bit_Bang_Tx_Send("enc 0 1\n");                
-                // i2c_driver_set_encod (*pmsg - '0', *(pmsg + 2) - '0');
-            }
-        }
+	Supply_Send_Voltage_Start ();
     }
-    
-    else if (strncmp (msg_str, "rpi is up", sizeof("rpi is up") - 1) == 0)
+
+    else if (strncmp (msg_str, "get mode", sizeof("get mode") - 1) == 0)
     {
-        Bit_Bang_Tx_Send("rpi up\n");
+	unsigned char mode = 0;
+
+	mode = Supply_Get_Mode();
+
+	if (mode == SUPPLY_MODE_UNKNOW)
+	{
+	    Usart3Send("mode unknow\r\n");
+	}
+	else if (mode == SUPPLY_MODE_BATT)
+	{
+	    Usart3Send("mode battery\r\n");
+	}
+	else    // SUPPLY_MODE_MAINS
+	{
+	    Usart3Send("mode mains\r\n");
+	}
     }
-    
-    else if (strncmp (msg_str, "sup", sizeof("sup") - 1) == 0)
-    {
-        // not implemented yet!
-        UsartRpiSend(s_ans_ok);
-    }
-    else
-        UsartRpiSend(s_ans_nok);
+
+    // else
+    //     Usart3Send(s_ans_nok);
 
 }
 
