@@ -44,11 +44,16 @@
 void Supply_Status_Reset (void);
 void Supply_Status (void);
 void Supply_Timeouts (void);
-unsigned short Supply_Get_Boost (void);
+
 void Supply_Send_Voltage_Start (void);
 void Supply_Convert_To_Volts (unsigned short adc_value,
 			      unsigned char * v_int,
 			      unsigned char * v_dec);
+
+unsigned short Supply_Get_Mains (void);
+unsigned short Supply_Get_Boost (void);
+unsigned short Supply_Get_Batt (unsigned char batt_num);
+
 unsigned char Supply_Get_Mode (void);
 
 

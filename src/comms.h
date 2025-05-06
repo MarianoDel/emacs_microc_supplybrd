@@ -16,16 +16,10 @@
 
 
 //---- Configurations Defines --------------------
-#define RpiSend(X)    Usart1Send(X)
-#define RpiHaveData()    Usart1HaveData()
-#define RpiHaveDataReset()    Usart1HaveDataReset()
-#define RpiReadBuffer(X,Y)    Usart1ReadBuffer(X,Y)
 
 
 // Module Exported Functions ---------------------------------------------------
-void Comms_Timeouts (void);
 void Comms_Update (void);
-// static void Comms_Messages (char * msg_str);
-unsigned char Comms_Rpi_Answering (void);
+
 
 #endif    /* _COMMS_H_ */

@@ -61,8 +61,6 @@ unsigned short batt4_filtered = 0;
 void Supply_Filters_Update (void);
 
 unsigned short Supply_Get_Charge_Batt (void);
-unsigned short Supply_Get_Mains (void);
-unsigned short Supply_Get_Batt (unsigned char batt_num);
 
 void Supply_Neopixel_Charging_With_Mains (void);
 void Supply_Neopixel_With_Batt (void);
@@ -132,16 +130,20 @@ void Supply_Status (void)
 	    sprintf(buff, "to mains standby v:%d\r\n", Supply_Get_Mains());
 	    Usart3Send(buff);
 
+	    Usart3Send("supply mode mains\r\n");
+	    
 	    supply_state = STANDBY_WITH_MAINS;
 	    break;
 	}
 
-	if (Supply_Get_Charge_Batt () > BATT_7V)
+	if (Supply_Get_Charge_Batt () > BATT_6_8V)
 	{
 	    char buff [100];
 	    sprintf(buff, "to batt standby v:%d\r\n", Supply_Get_Charge_Batt());
 	    Usart3Send(buff);
 
+	    Usart3Send("supply mode battery\r\n");
+	    
 	    supply_state = STANDBY_WITH_BATT;
 	    break;
 	}
@@ -168,6 +170,8 @@ void Supply_Status (void)
 		    Supply_Get_Charge_Batt());
 	    Usart3Send(buff);
 
+	    Usart3Send("supply mode battery\r\n");
+	    
 	    supply_state = STANDBY_WITH_BATT;
 	    break;
 	}
@@ -176,7 +180,7 @@ void Supply_Status (void)
 	break;
 
     case STANDBY_WITH_BATT:
-	if (Supply_Get_Charge_Batt () < BATT_7V)
+	if (Supply_Get_Charge_Batt () < BATT_6_4V)
 	{
 	    Usart3Send("to init standby low batt\r\n");	    
 	    supply_state = INIT_STANDBY;
@@ -198,6 +202,8 @@ void Supply_Status (void)
 	    sprintf(buff, "to mains standby v:%d\r\n", Supply_Get_Mains());
 	    Usart3Send(buff);
 
+	    Usart3Send("supply mode mains\r\n");
+	    
 	    supply_state = STANDBY_WITH_MAINS;
 	    break;
 	}
@@ -229,7 +235,10 @@ void Supply_Status (void)
 	    
 	if (Supply_Get_Mains() < MAINS_10V)
 	{
-	    Usart3Send("low mains, to poweron with batt\r\n");	    
+	    Usart3Send("low mains, to poweron with batt\r\n");
+	    
+	    Usart3Send("supply mode battery\r\n");
+	    
 	    // change to batt
 	    supply_state = POWERON_WITH_BATT;
 	}
@@ -263,6 +272,7 @@ void Supply_Status (void)
 	if (Supply_Get_Mains() > MAINS_10V)
 	{
 	    Usart3Send("mains is good, to poweron with mains\r\n");
+	    Usart3Send("supply mode mains\r\n");
 	    // change to mains
 	    supply_state = POWERON_WITH_MAINS;
 	}
@@ -371,6 +381,8 @@ unsigned short Supply_Get_Batt (unsigned char batt_num)
 }
 
 
+unsigned char dimmer_cnt = 0;
+unsigned char dimmer_dir = 0;
 void Supply_Neopixel_Charging_With_Mains (void)
 {
     unsigned short charge = 0;
@@ -378,16 +390,50 @@ void Supply_Neopixel_Charging_With_Mains (void)
     if (supply_neopixel_timer)
 	return;
 
-    supply_neopixel_timer = 5;
+    supply_neopixel_timer = 6;
+
+    // update the dimmer cnt and direction
+    if (dimmer_dir == 0)
+    {
+	if (dimmer_cnt < 255)
+	    dimmer_cnt++;
+	else
+	    dimmer_dir = 1;
+    }
+    else
+    {
+	if (dimmer_cnt)
+	    dimmer_cnt--;
+	else
+	    dimmer_dir = 0;
+    }
     
     // check batt voltages
     charge = Supply_Get_Charge_Batt ();
 
+    pixel_t my_pixel;
+    unsigned short calc = 0;
+
+    Supply_Set_Neopixel_Voltage(&my_pixel, charge);
+
+    calc = my_pixel.R * dimmer_cnt;
+    calc >>= 8;
+    my_pixel.R = calc;
+
+    calc = my_pixel.G * dimmer_cnt;
+    calc >>= 8;
+    my_pixel.G = calc;
+
+    calc = my_pixel.B * dimmer_cnt;
+    calc >>= 8;
+    my_pixel.B = calc;
     
+    Neo_Set_Pixel(0, &my_pixel);
+    Neo_Driver_Send_Pixel_Data();
 }
 
 
-unsigned char neo_cnt = 0;
+unsigned short neo_cnt = 0;
 unsigned char neo_light = 0;
 void Supply_Neopixel_With_Batt (void)
 {
@@ -416,7 +462,7 @@ void Supply_Neopixel_With_Batt (void)
 	Neo_Driver_Send_Pixel_Data();
 
 	neo_light = 1;
-	neo_cnt = 4;	
+	neo_cnt = 4;    // 200ms in on	
     }
     else
     {
@@ -430,7 +476,7 @@ void Supply_Neopixel_With_Batt (void)
 	Neo_Driver_Send_Pixel_Data();
 
 	neo_light = 0;
-	neo_cnt = 200;	
+	neo_cnt = 600;    // 3 secs in off	
     }
 }
 
