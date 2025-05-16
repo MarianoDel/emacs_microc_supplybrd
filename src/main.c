@@ -30,44 +30,32 @@
 
 
 // Private Types Constants and Macros ------------------------------------------
-// typedef enum {
-//     INIT,
-//     MAINS_SUPPLY,
-//     BATTERY_GOOD,
-//     BATTERY_LOW
-    
-    
-// } supply_states_e;
+
 
 // Externals -------------------------------------------------------------------
 //--- Externals from timers
 volatile unsigned short timer_standby = 0;
-// volatile unsigned short timer_for_batt_report = 0;
 volatile unsigned short wait_ms_var = 0;
-// volatile unsigned char probe_detect_timer = 0;
-// volatile unsigned short probe_detect_filter = 0;
+
 
 //--- Externals from adc
 volatile unsigned short adc_ch [ADC_CHANNEL_QUANTITY];
 
 
 // Globals ---------------------------------------------------------------------
-// volatile unsigned short timer_sync_xxx_ms = 0;
-// volatile unsigned short timer_out4 = 0;
-
-// parameters_typedef * pmem = (parameters_typedef *) (unsigned int *) FLASH_PAGE_FOR_BKP;	//en flash
-// parameters_typedef mem_conf;
 
 
 // Module Private Functions ----------------------------------------------------
 void TimingDelay_Decrement(void);
 void SysTickError (void);
+
+#ifdef HARDWARE_VERSION_1_0
 unsigned char Probe_Detect_Ch1 (void);
 void Probe_Detect_Update (void);
 void Starts_Everything (void);
 void Shutdown_Everything (void);
 void Full_Working_Loop (void);
-
+#endif
 
 // Module Functions ------------------------------------------------------------
 int main (void)

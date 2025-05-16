@@ -10,10 +10,6 @@
 #include "hard.h"
 #include "stm32f10x.h"
 
-#include "adc.h"
-#include "tim.h"
-#include "usart.h"
-
 #include <stdio.h>
 
 
@@ -21,7 +17,6 @@
 
 
 // Externals -------------------------------------------------------------------
-extern volatile unsigned short adc_ch [];
 
 
 // Globals ---------------------------------------------------------------------
@@ -75,6 +70,12 @@ void OnOff_Off (void)
 #endif
 
 #ifdef HARDWARE_VERSION_1_0
+#include "adc.h"
+#include "tim.h"
+#include "usart.h"
+
+extern volatile unsigned short adc_ch [];
+
 void Ena_Ch1_On (void)
 {
     ENA_CH1_ON;
