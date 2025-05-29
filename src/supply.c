@@ -213,6 +213,12 @@ void Supply_Status (void)
 
     case POWERON_WITH_MAINS:
 	Boost_Update();
+
+	if (!supply_timeout)
+	{
+	    supply_timeout = 10000;
+	    Supply_Send_Voltage_Start ();
+	}
 	// if ((Supply_Get_Boost() > BOOST_13V) &&
 	//     (Supply_Get_Boost() < BOOST_15V))
 	// {
@@ -248,8 +254,16 @@ void Supply_Status (void)
 
     case POWERON_WITH_BATT:
 	Boost_Update();
-	// if ((Supply_Get_Boost() > BOOST_13V) &&
+
+	if (!supply_timeout)
+	{
+	    supply_timeout = 10000;
+	    Supply_Send_Voltage_Start ();
+	}
+
+        // if ((Supply_Get_Boost() > BOOST_13V) &&
 	//     (Supply_Get_Boost() < BOOST_15V))
+
 	if ( Supply_Get_Boost() < BOOST_15V)
 	{
 	    OnOff_On();
