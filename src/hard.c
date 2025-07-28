@@ -20,6 +20,8 @@
 
 
 // Globals ---------------------------------------------------------------------
+volatile unsigned short hard_timer = 0;
+
 
 
 // Module Private Functions ----------------------------------------------------
@@ -27,6 +29,33 @@
 
 // Module Functions ------------------------------------------------------------
 #ifdef HARDWARE_VERSION_2_0
+
+void Hard_Timeouts (void)
+{
+    if (hard_timer)
+	hard_timer--;
+}
+
+
+unsigned short hard_sw_power_on_cnt = 0;
+void Sw_Power_On_Update (void)
+{
+    if (hard_timer)
+	return;
+
+    hard_timer = 10;
+
+    if (SW_POWER_ON)
+    {
+	if (hard_sw_power_on_cnt < 20)
+	    hard_sw_power_on_cnt++;
+    }
+    else if (hard_sw_power_on_cnt)
+	hard_sw_power_on_cnt--;
+    
+}
+
+
 unsigned char Led_Is_On (void)
 {
     return LED;
@@ -47,8 +76,14 @@ void Led_Off (void)
 
 unsigned char Sw_Power_On (void)
 {
-    return SW_POWER_ON;
+    unsigned char a = 0;
+
+    if (hard_sw_power_on_cnt > 15)
+	a = 1;
+    
+    return a; 
 }
+
 
 unsigned char OnOff_Is_On (void)
 {

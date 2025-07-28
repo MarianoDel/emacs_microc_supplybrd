@@ -27,7 +27,9 @@ typedef enum {
     STANDBY_WITH_MAINS,
     STANDBY_WITH_BATT,
     POWERON_WITH_MAINS,
-    POWERON_WITH_BATT
+    POWERON_WITH_BATT,
+    SHUTTING_DOWN,
+    SHUTDOWN
     
 } supply_states_e;
 
@@ -66,6 +68,7 @@ void Supply_Neopixel_Charging_With_Mains (void);
 void Supply_Neopixel_With_Batt (void);
 void Supply_Set_Neopixel_Voltage (pixel_t * ppix, unsigned short batt_volts);
 unsigned short Supply_Get_Charge_Batt (void);
+void Supply_Neopixel_Shutting_Down (void);
 void Supply_Neopixel_Shutdown (void);
 
 void Supply_Send_Voltage_SM (void);
@@ -115,19 +118,18 @@ void Supply_Status (void)
 	    MA16_U16Circular (&batt4_f, Sense_BATT4);
 	}
 	Usart3Send("\r\n");
-	Usart3Send("to standby\r\n");	
+	Usart3Send("INFO: to standby\r\n");	
 	supply_state++;
 	break;
 
     case INIT_STANDBY:
-
 	if (supply_timeout)
 	    break;
-	    
+        	    
 	if (Supply_Get_Mains() > MAINS_10V)
 	{
 	    char buff [100];
-	    sprintf(buff, "to mains standby v:%d\r\n", Supply_Get_Mains());
+	    sprintf(buff, "INFO: to mains standby v:%d\r\n", Supply_Get_Mains());
 	    Usart3Send(buff);
 
 	    Usart3Send("supply mode mains\r\n");
@@ -139,7 +141,7 @@ void Supply_Status (void)
 	if (Supply_Get_Charge_Batt () > BATT_6_8V)
 	{
 	    char buff [100];
-	    sprintf(buff, "to batt standby v:%d\r\n", Supply_Get_Charge_Batt());
+	    sprintf(buff, "INFO: to batt standby v:%d\r\n", Supply_Get_Charge_Batt());
 	    Usart3Send(buff);
 
 	    Usart3Send("supply mode battery\r\n");
@@ -154,18 +156,18 @@ void Supply_Status (void)
     case STANDBY_WITH_MAINS:
 	if (Sw_Power_On())
 	{
-	    Usart3Send("to poweron with mains\r\n");
+	    Usart3Send("INFO: to poweron with mains\r\n");
 	    // TIM boost init
 	    Boost_Start();
+	    OnOff_On();
 	    supply_state = POWERON_WITH_MAINS;
-	    OnOff_On();    // for tests
 	    break;
 	}
 
 	if (Supply_Get_Mains() < MAINS_10V)
 	{
 	    char buff [100];
-	    sprintf(buff, "low mains go batt mains:%d batt:%d\r\n",
+	    sprintf(buff, "INFO: low mains go batt mains:%d batt:%d\r\n",
 		    Supply_Get_Mains(),
 		    Supply_Get_Charge_Batt());
 	    Usart3Send(buff);
@@ -182,14 +184,15 @@ void Supply_Status (void)
     case STANDBY_WITH_BATT:
 	if (Supply_Get_Charge_Batt () < BATT_6_4V)
 	{
-	    Usart3Send("to init standby low batt\r\n");	    
+	    Usart3Send("INFO: to init standby low batt\r\n");
+	    Supply_Neopixel_Shutdown();
 	    supply_state = INIT_STANDBY;
 	    break;
 	}
 
 	if (Sw_Power_On())
 	{
-	    Usart3Send("to poweron with batt\r\n");
+	    Usart3Send("INFO: to poweron with batt\r\n");
 	    // TIM boost init
 	    Boost_Start();
 	    supply_state = POWERON_WITH_BATT;
@@ -199,7 +202,7 @@ void Supply_Status (void)
 	if (Supply_Get_Mains() > MAINS_10V)
 	{
 	    char buff [100];
-	    sprintf(buff, "to mains standby v:%d\r\n", Supply_Get_Mains());
+	    sprintf(buff, "INFO: to mains standby v:%d\r\n", Supply_Get_Mains());
 	    Usart3Send(buff);
 
 	    Usart3Send("supply mode mains\r\n");
@@ -231,17 +234,14 @@ void Supply_Status (void)
 
 	if (!Sw_Power_On())
 	{
-	    Usart3Send("poweroff, to standby with mains\r\n");
-	    // shutdowm
-	    Boost_Stop();
-	    OnOff_Off();
-	    supply_state = STANDBY_WITH_MAINS;
+	    Usart3Send("poweroff, on mains\r\n");
+	    supply_state = SHUTTING_DOWN;
 	    break;
 	}
 	    
 	if (Supply_Get_Mains() < MAINS_10V)
 	{
-	    Usart3Send("low mains, to poweron with batt\r\n");
+	    Usart3Send("INFO: low mains, to poweron with batt\r\n");
 	    
 	    Usart3Send("supply mode battery\r\n");
 	    
@@ -275,17 +275,14 @@ void Supply_Status (void)
 
 	if (!Sw_Power_On())
 	{
-	    Usart3Send("poweroff, to standby with batt\r\n");
-	    // shutdowm
-	    Boost_Stop();
-	    OnOff_Off();
-	    supply_state = STANDBY_WITH_BATT;
+	    Usart3Send("poweroff, on batt\r\n");
+	    supply_state = SHUTTING_DOWN;
 	    break;
 	}
 	    
 	if (Supply_Get_Mains() > MAINS_10V)
 	{
-	    Usart3Send("mains is good, to poweron with mains\r\n");
+	    Usart3Send("INFO: mains is good, to poweron with mains\r\n");
 	    Usart3Send("supply mode mains\r\n");
 	    // change to mains
 	    supply_state = POWERON_WITH_MAINS;
@@ -293,15 +290,35 @@ void Supply_Status (void)
 
 	if (Supply_Get_Charge_Batt () < BATT_6_4V)
 	{
-	    Usart3Send("batt too low, shutdown, to init standby\r\n");	    
-	    supply_state = INIT_STANDBY;
-	    Supply_Neopixel_Shutdown();	    
+	    Usart3Send("INFO: batt too low, shutdown, to init standby\r\n");
+	    Usart3Send("poweroff, low batt\r\n");	    
+	    supply_state = SHUTTING_DOWN;	    
 	    break;
 	}
 
 	Supply_Neopixel_With_Batt();	    
 	break;
 
+    case SHUTTING_DOWN:
+	// give 20 secs to rpi
+	supply_timeout = 20000;
+	supply_state = SHUTDOWN;
+	break;
+
+    case SHUTDOWN:
+	if (supply_timeout)
+	{
+	    Boost_Update();
+	    Supply_Neopixel_Shutting_Down();
+	    break;
+	}
+
+	Boost_Stop();
+	OnOff_Off();
+	Supply_Neopixel_Shutdown();
+	supply_state = INIT_STANDBY;
+	break;
+	
     default:
 	supply_state = INIT_FILTERS;
 	break;
@@ -309,6 +326,7 @@ void Supply_Status (void)
 
     Supply_Filters_Update ();
     Supply_Send_Voltage_SM ();
+    Sw_Power_On_Update ();
 }
 
 
@@ -472,6 +490,50 @@ void Supply_Neopixel_With_Batt (void)
 	pixel_t my_pixel;
 
 	Supply_Set_Neopixel_Voltage(&my_pixel, charge);
+	Neo_Set_Pixel(0, &my_pixel);
+	Neo_Driver_Send_Pixel_Data();
+
+	neo_light = 1;
+	neo_cnt = 4;    // 200ms in on	
+    }
+    else
+    {
+	pixel_t my_pixel;
+
+	my_pixel.R = 0;
+	my_pixel.G = 0;
+	my_pixel.B = 0;
+
+	Neo_Set_Pixel(0, &my_pixel);
+	Neo_Driver_Send_Pixel_Data();
+
+	neo_light = 0;
+	neo_cnt = 600;    // 3 secs in off	
+    }
+}
+
+
+void Supply_Neopixel_Shutting_Down (void)
+{
+    if (supply_neopixel_timer)
+	return;
+
+    supply_neopixel_timer = 5;
+
+    if (neo_cnt)
+    {
+	neo_cnt--;
+	return;
+    }
+
+    if (!neo_light)
+    {
+	pixel_t my_pixel;
+
+	my_pixel.R = 85;
+	my_pixel.G = 85;
+	my_pixel.B = 85;
+
 	Neo_Set_Pixel(0, &my_pixel);
 	Neo_Driver_Send_Pixel_Data();
 

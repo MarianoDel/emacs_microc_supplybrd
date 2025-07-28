@@ -550,6 +550,8 @@ void TimingDelay_Decrement(void)
         // probe_detect_timer--;
 
     // i2c_driver_timeouts ();
+
+    Hard_Timeouts ();
     
     Supply_Timeouts ();
 }

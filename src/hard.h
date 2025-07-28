@@ -309,6 +309,8 @@ unsigned char Sw_Power_On (void);
 unsigned char OnOff_Is_On (void);
 void OnOff_On (void);
 void OnOff_Off (void);
+void Hard_Timeouts (void);
+void Sw_Power_On_Update (void);
 #endif
 
 #ifdef HARDWARE_VERSION_1_0
