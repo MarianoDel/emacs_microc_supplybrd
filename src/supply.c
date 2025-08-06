@@ -28,7 +28,8 @@ typedef enum {
     STANDBY_WITH_BATT,
     POWERON_WITH_MAINS,
     POWERON_WITH_BATT,
-    SHUTTING_DOWN,
+    WAIT_RPI_UP_FOR_SHUTTING_DOWN,
+    SHUTTING_DOWN,    
     SHUTDOWN
     
 } supply_states_e;
@@ -42,6 +43,8 @@ extern volatile unsigned short adc_ch [];
 volatile unsigned short supply_timeout = 0;
 volatile unsigned short supply_filter_timer = 0;
 volatile unsigned short supply_neopixel_timer = 0;
+volatile unsigned short supply_powerup_timer = 0;
+// volatile unsigned short supply_powerdwn_timer = 0;
 
 
 ma16_u16_data_obj_t boost_f;
@@ -85,6 +88,9 @@ void Supply_Timeouts (void)
 
     if (supply_neopixel_timer)
         supply_neopixel_timer--;
+
+    if (supply_powerup_timer)
+	supply_powerup_timer--;
 }
 
 
@@ -160,6 +166,7 @@ void Supply_Status (void)
 	    // TIM boost init
 	    Boost_Start();
 	    OnOff_On();
+	    supply_powerup_timer = 35000;    // give 35secs for powerup
 	    supply_state = POWERON_WITH_MAINS;
 	    break;
 	}
@@ -195,6 +202,7 @@ void Supply_Status (void)
 	    Usart3Send("INFO: to poweron with batt\r\n");
 	    // TIM boost init
 	    Boost_Start();
+	    supply_powerup_timer = 35000;    // give 35secs for powerup
 	    supply_state = POWERON_WITH_BATT;
 	    break;
 	}
@@ -234,8 +242,16 @@ void Supply_Status (void)
 
 	if (!Sw_Power_On())
 	{
-	    Usart3Send("poweroff, on mains\r\n");
-	    supply_state = SHUTTING_DOWN;
+	    if (!supply_powerup_timer)
+	    {
+		Usart3Send("\r\npoweroff, on mains\r\n");
+		supply_state = SHUTTING_DOWN;
+	    }
+	    else
+	    {
+		Usart3Send("\r\npowering off, on mains\r\n");
+		supply_state = WAIT_RPI_UP_FOR_SHUTTING_DOWN;		
+	    }
 	    break;
 	}
 	    
@@ -275,8 +291,16 @@ void Supply_Status (void)
 
 	if (!Sw_Power_On())
 	{
-	    Usart3Send("poweroff, on batt\r\n");
-	    supply_state = SHUTTING_DOWN;
+	    if (!supply_powerup_timer)
+	    {
+		Usart3Send("\r\npoweroff, on batt\r\n");
+		supply_state = SHUTTING_DOWN;
+	    }
+	    else
+	    {
+		Usart3Send("\r\npowering off, on batt\r\n");
+		supply_state = WAIT_RPI_UP_FOR_SHUTTING_DOWN;		
+	    }
 	    break;
 	}
 	    
@@ -291,7 +315,7 @@ void Supply_Status (void)
 	if (Supply_Get_Charge_Batt () < BATT_6_4V)
 	{
 	    Usart3Send("INFO: batt too low, shutdown, to init standby\r\n");
-	    Usart3Send("poweroff, low batt\r\n");	    
+	    Usart3Send("\r\npoweroff, low batt\r\n");	    
 	    supply_state = SHUTTING_DOWN;	    
 	    break;
 	}
@@ -299,12 +323,24 @@ void Supply_Status (void)
 	Supply_Neopixel_With_Batt();	    
 	break;
 
-    case SHUTTING_DOWN:
-	// give 20 secs to rpi
-	supply_timeout = 20000;
-	supply_state = SHUTDOWN;
+    case WAIT_RPI_UP_FOR_SHUTTING_DOWN:
+	// give time to rpi goes up
+	if (supply_powerup_timer)
+	{
+	    Boost_Update();
+	    break;
+	}
+
+	Usart3Send("\r\npoweroff, on mains\r\n");
+	supply_state = SHUTTING_DOWN;
 	break;
 
+    case SHUTTING_DOWN:
+	// give 12 secs to rpi go down
+	supply_timeout = 12000;
+	supply_state = SHUTDOWN;
+	break;
+	
     case SHUTDOWN:
 	if (supply_timeout)
 	{
