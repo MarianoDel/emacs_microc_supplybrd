@@ -42,9 +42,16 @@ extern volatile unsigned short adc_ch [];
 // Globals ---------------------------------------------------------------------
 volatile unsigned short supply_timeout = 0;
 volatile unsigned short supply_filter_timer = 0;
-volatile unsigned short supply_neopixel_timer = 0;
 volatile unsigned short supply_powerup_timer = 0;
 // volatile unsigned short supply_powerdwn_timer = 0;
+
+
+#ifdef USE_NEOPIXEL_INDICATOR
+volatile unsigned short supply_neopixel_timer = 0;
+#endif
+
+#ifdef USE_POWER_LED_INDICATOR
+#endif
 
 
 ma16_u16_data_obj_t boost_f;
@@ -64,15 +71,19 @@ unsigned short batt4_filtered = 0;
 
 // Module Private Functions ----------------------------------------------------
 void Supply_Filters_Update (void);
-
 unsigned short Supply_Get_Charge_Batt (void);
 
+#ifdef USE_NEOPIXEL_INDICATOR
 void Supply_Neopixel_Charging_With_Mains (void);
 void Supply_Neopixel_With_Batt (void);
 void Supply_Set_Neopixel_Voltage (pixel_t * ppix, unsigned short batt_volts);
 unsigned short Supply_Get_Charge_Batt (void);
 void Supply_Neopixel_Shutting_Down (void);
 void Supply_Neopixel_Shutdown (void);
+#endif
+
+#ifdef USE_POWER_LED_INDICATOR
+#endif
 
 void Supply_Send_Voltage_SM (void);
 
@@ -86,8 +97,10 @@ void Supply_Timeouts (void)
     if (supply_filter_timer)
         supply_filter_timer--;
 
+#ifdef USE_NEOPIXEL_INDICATOR    
     if (supply_neopixel_timer)
         supply_neopixel_timer--;
+#endif
 
     if (supply_powerup_timer)
 	supply_powerup_timer--;
@@ -144,7 +157,7 @@ void Supply_Status (void)
 	    break;
 	}
 
-	if (Supply_Get_Charge_Batt () > BATT_6_8V)
+	if (Supply_Get_Charge_Batt () > BATT_MIN_VOLTS_FOR_START)
 	{
 	    char buff [100];
 	    sprintf(buff, "INFO: to batt standby v:%d\r\n", Supply_Get_Charge_Batt());
@@ -184,15 +197,19 @@ void Supply_Status (void)
 	    supply_state = STANDBY_WITH_BATT;
 	    break;
 	}
-	    
+
+#ifdef USE_NEOPIXEL_INDICATOR	
 	Supply_Neopixel_Charging_With_Mains();
+#endif
 	break;
 
     case STANDBY_WITH_BATT:
-	if (Supply_Get_Charge_Batt () < BATT_6_4V)
+	if (Supply_Get_Charge_Batt () < BATT_VOLTS_FOR_SHUTDWN)
 	{
 	    Usart3Send("INFO: to init standby low batt\r\n");
+#ifdef USE_NEOPIXEL_INDICATOR		    
 	    Supply_Neopixel_Shutdown();
+#endif
 	    supply_state = INIT_STANDBY;
 	    break;
 	}
@@ -218,8 +235,9 @@ void Supply_Status (void)
 	    supply_state = STANDBY_WITH_MAINS;
 	    break;
 	}
-	
+#ifdef USE_NEOPIXEL_INDICATOR
 	Supply_Neopixel_With_Batt();
+#endif
 	break;
 
     case POWERON_WITH_MAINS:
@@ -264,8 +282,10 @@ void Supply_Status (void)
 	    // change to batt
 	    supply_state = POWERON_WITH_BATT;
 	}
-	    
+
+#ifdef USE_NEOPIXEL_INDICATOR
 	Supply_Neopixel_Charging_With_Mains();
+#endif
 	break;
 
     case POWERON_WITH_BATT:
@@ -312,7 +332,7 @@ void Supply_Status (void)
 	    supply_state = POWERON_WITH_MAINS;
 	}
 
-	if (Supply_Get_Charge_Batt () < BATT_6_4V)
+	if (Supply_Get_Charge_Batt () < BATT_VOLTS_FOR_SHUTDWN)
 	{
 	    Usart3Send("INFO: batt too low, shutdown, to init standby\r\n");
 	    Usart3Send("\r\npoweroff, low batt\r\n");	    
@@ -320,7 +340,9 @@ void Supply_Status (void)
 	    break;
 	}
 
-	Supply_Neopixel_With_Batt();	    
+#ifdef USE_NEOPIXEL_INDICATOR
+	Supply_Neopixel_With_Batt();
+#endif
 	break;
 
     case WAIT_RPI_UP_FOR_SHUTTING_DOWN:
@@ -345,13 +367,19 @@ void Supply_Status (void)
 	if (supply_timeout)
 	{
 	    Boost_Update();
+#ifdef USE_NEOPIXEL_INDICATOR
 	    Supply_Neopixel_Shutting_Down();
+#endif
 	    break;
 	}
 
+	// give two secs with all shutdown
+	supply_timeout = 2000;	
 	Boost_Stop();
 	OnOff_Off();
+#ifdef USE_NEOPIXEL_INDICATOR
 	Supply_Neopixel_Shutdown();
+#endif
 	supply_state = INIT_STANDBY;
 	break;
 	
@@ -449,6 +477,7 @@ unsigned short Supply_Get_Batt (unsigned char batt_num)
 }
 
 
+#ifdef USE_NEOPIXEL_INDICATOR
 unsigned char dimmer_cnt = 0;
 unsigned char dimmer_dir = 0;
 void Supply_Neopixel_Charging_With_Mains (void)
@@ -615,6 +644,7 @@ void Supply_Set_Neopixel_Voltage (pixel_t * ppix, unsigned short batt_volts)
     if (batt_volts > BATT_7_2V)
 	ppix->G = 255;
     else if (batt_volts > BATT_6_8V)
+    // else if (batt_volts > BATT_MIN_VOLTS_FOR_START)	
     {
 	ppix->G = 127;
 	ppix->R = 255 - 127;	
@@ -628,6 +658,7 @@ void Supply_Set_Neopixel_Voltage (pixel_t * ppix, unsigned short batt_volts)
 	ppix->R = 255;
     
 }
+#endif // USE_NEOPIXEL_INDICATOR
 
 
 unsigned short Supply_Get_Charge_Batt (void)
@@ -701,7 +732,8 @@ void Supply_Send_Voltage_SM (void)
 				 &vint,
 				 &vdec);
 
-	sprintf(buff_volts, "%02d.%d ", vint, vdec);
+	sprintf(buff_volts, "%02d.%d ", vint, vdec);	
+
 	Usart3Send(buff_volts);
 	supply_send_voltage++;
 	break;
@@ -712,19 +744,25 @@ void Supply_Send_Voltage_SM (void)
 				 &vint,
 				 &vdec);
 
-	sprintf(buff_volts, "%02d.%d ", vint, vdec);
+	sprintf(buff_volts, "%02d.%d ", vint, vdec);	
+
 	Usart3Send(buff_volts);
-	
 	supply_send_voltage++;
 	break;
 
     case 4:
 	// send bat1
+#ifdef USE_TWO_DECIMAL_IN_BATT_VOLTAGES	
+	Supply_Convert_To_Volts_Two_Decimals (Supply_Get_Batt(0),
+					      &vint,
+					      &vdec);
+	sprintf(buff_volts, "%d.%02d ", vint, vdec);
+#else
 	Supply_Convert_To_Volts (Supply_Get_Batt(0),
 				 &vint,
 				 &vdec);
-
 	sprintf(buff_volts, "%02d.%d ", vint, vdec);
+#endif
 	Usart3Send(buff_volts);
 	
 	supply_send_voltage++;
@@ -732,11 +770,17 @@ void Supply_Send_Voltage_SM (void)
 
     case 5:
 	// send bat2
+#ifdef USE_TWO_DECIMAL_IN_BATT_VOLTAGES	
+	Supply_Convert_To_Volts_Two_Decimals (Supply_Get_Batt(1),
+					      &vint,
+					      &vdec);
+	sprintf(buff_volts, "%d.%02d ", vint, vdec);
+#else
 	Supply_Convert_To_Volts (Supply_Get_Batt(1),
 				 &vint,
 				 &vdec);
-
 	sprintf(buff_volts, "%02d.%d ", vint, vdec);
+#endif
 	Usart3Send(buff_volts);
 	
 	supply_send_voltage++;
@@ -744,11 +788,17 @@ void Supply_Send_Voltage_SM (void)
 
     case 6:
 	// send bat3
+#ifdef USE_TWO_DECIMAL_IN_BATT_VOLTAGES
+	Supply_Convert_To_Volts_Two_Decimals (Supply_Get_Batt(2),
+					      &vint,
+					      &vdec);	
+	sprintf(buff_volts, "%d.%02d ", vint, vdec);
+#else
 	Supply_Convert_To_Volts (Supply_Get_Batt(2),
 				 &vint,
 				 &vdec);
-
 	sprintf(buff_volts, "%02d.%d ", vint, vdec);
+#endif
 	Usart3Send(buff_volts);
 	
 	supply_send_voltage++;
@@ -756,11 +806,17 @@ void Supply_Send_Voltage_SM (void)
 
     case 7:
 	// send bat4
+#ifdef USE_TWO_DECIMAL_IN_BATT_VOLTAGES	
+	Supply_Convert_To_Volts_Two_Decimals (Supply_Get_Batt(3),
+					      &vint,
+					      &vdec);	
+	sprintf(buff_volts, "%d.%02d ", vint, vdec);
+#else
 	Supply_Convert_To_Volts (Supply_Get_Batt(3),
 				 &vint,
 				 &vdec);
-
-	sprintf(buff_volts, "%02d.%d\r\n", vint, vdec);
+	sprintf(buff_volts, "%02d.%d ", vint, vdec);
+#endif
 	Usart3Send(buff_volts);
 	
 	supply_send_voltage = 0;
@@ -799,6 +855,25 @@ void Supply_Convert_To_Volts (unsigned short adc_value,
 }
 
 
+void Supply_Convert_To_Volts_Two_Decimals (unsigned short adc_value,
+					   unsigned char * v_int,
+					   unsigned char * v_dec)
+{
+    // Rmult is 0.211
+    // Vx = adc * 3.3 
+    float fcalc = 1.0;
+
+    fcalc = adc_value * 15.64;
+    // fcalc = adc_value * 15.08;    // adjust 8.1 -> 7.81
+    fcalc = fcalc / 4095.;
+
+    *v_int = (unsigned char) fcalc;
+    fcalc = fcalc - *v_int;
+    fcalc = fcalc * 100;
+    *v_dec = (unsigned char) fcalc;    
+}
+
+
 // 0 unknow
 // 1 batt
 // 2 mains
@@ -814,6 +889,12 @@ unsigned char Supply_Get_Mode (void)
 	a = SUPPLY_MODE_MAINS;
 
     return a;
+}
+
+
+unsigned char Supply_Get_Status (void)
+{
+    return supply_state;
 }
 
 //--- end of file ---//

@@ -9,6 +9,7 @@
 //---------------------------------------------
 #include "hard.h"
 #include "stm32f10x.h"
+#include "supply.h"
 
 #include <stdio.h>
 
@@ -37,6 +38,117 @@ void Hard_Timeouts (void)
 }
 
 
+#ifdef USE_POWER_LED_INDICATOR
+typedef enum {
+    CHECK_STATUS_INIT,
+    CHECK_STATUS,
+    WAIT_NEXT,
+    WAIT_NEXT_LOW_BATT
+    
+} pwr_led_status_e;
+unsigned short hard_sw_power_on_cnt = 0;
+unsigned short led_status_cnt = 0;
+pwr_led_status_e pwr_status;
+void Sw_Power_On_Update (void)
+{
+    if (hard_timer)
+	return;
+
+    switch (pwr_status)
+    {
+    case CHECK_STATUS_INIT:
+	LED_STATUS_ON;
+	hard_timer = 1;
+	led_status_cnt = 0;
+	pwr_status++;
+	break;
+
+    case CHECK_STATUS:
+	if (SW_POWER_ON)
+	{
+	    if (hard_sw_power_on_cnt < 8)
+		hard_sw_power_on_cnt++;
+	}
+	else if (hard_sw_power_on_cnt)
+	    hard_sw_power_on_cnt--;
+
+
+	if (led_status_cnt < 10)
+	    led_status_cnt++;
+	else
+	{
+	    LED_STATUS_OFF;
+
+	    // show led status checking supply status
+	    if (Supply_Get_Status() == 1)    // batt not good INIT_STANDBY state eq 1
+		pwr_status = WAIT_NEXT_LOW_BATT;
+	    else
+		pwr_status++;
+	}
+	break;
+
+    case WAIT_NEXT:
+	if (led_status_cnt > 1000)
+	{
+	    pwr_status = CHECK_STATUS_INIT;
+	    break;
+	}
+
+	if (Sw_Power_On())
+	    LED_STATUS_ON;
+	else
+	    LED_STATUS_OFF;    
+	    
+	hard_timer = 1;
+	led_status_cnt++;	
+	break;
+
+    case WAIT_NEXT_LOW_BATT:
+	if (led_status_cnt > 2000)
+	{
+	    pwr_status = CHECK_STATUS_INIT;
+	    break;
+	}
+
+	if (Sw_Power_On())
+	{
+	    if (((led_status_cnt > 0) && (led_status_cnt < 90)) ||
+		((led_status_cnt > 240) && (led_status_cnt < 340)) ||
+		((led_status_cnt > 490) && (led_status_cnt < 590)))
+		LED_STATUS_ON;
+	    else
+		LED_STATUS_OFF;
+	}
+	else
+	    LED_STATUS_OFF;    
+	    
+	hard_timer = 1;
+	led_status_cnt++;	
+	break;
+	
+    default:
+	pwr_status = 0;
+	break;
+    }
+}
+
+
+// void Sw_Power_Led_Status (unsigned char new_status)
+// {
+//     led_status_from_supply = new_status;
+// }
+
+
+unsigned char Sw_Power_On (void)
+{
+    unsigned char a = 0;
+
+    if (hard_sw_power_on_cnt >= 5)
+	a = 1;
+    
+    return a; 
+}
+#else
 unsigned short hard_sw_power_on_cnt = 0;
 void Sw_Power_On_Update (void)
 {
@@ -47,13 +159,25 @@ void Sw_Power_On_Update (void)
 
     if (SW_POWER_ON)
     {
-	if (hard_sw_power_on_cnt < 20)
+	if (hard_sw_power_on_cnt < 30)
 	    hard_sw_power_on_cnt++;
     }
     else if (hard_sw_power_on_cnt)
 	hard_sw_power_on_cnt--;
     
 }
+
+
+unsigned char Sw_Power_On (void)
+{
+    unsigned char a = 0;
+
+    if (hard_sw_power_on_cnt > 15)
+	a = 1;
+    
+    return a; 
+}
+#endif    // USE_POWER_LED_INDICATOR
 
 
 unsigned char Led_Is_On (void)
@@ -73,16 +197,6 @@ void Led_Off (void)
     LED_OFF;
 }
 
-
-unsigned char Sw_Power_On (void)
-{
-    unsigned char a = 0;
-
-    if (hard_sw_power_on_cnt > 15)
-	a = 1;
-    
-    return a; 
-}
 
 
 unsigned char OnOff_Is_On (void)

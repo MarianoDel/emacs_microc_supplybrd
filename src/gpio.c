@@ -111,12 +111,22 @@ void GpioInit (void)
     // PA4 Analog DAC Output1 (DAC_OUT1)
     // PA5 NC
     // PA6 NC
+#ifdef USE_NEOPIXEL_INDICATOR
     // PA7 Alternative (TIM3_CH2) open drain
     temp = GPIOA->CRL;
     temp &= 0x0FF000F0;
     temp |= 0xF0000004;
     GPIOA->CRL = temp;
+#endif
 
+#ifdef USE_POWER_LED_INDICATOR
+    // PA7 output
+    temp = GPIOA->CRL;
+    temp &= 0x0FF000F0;
+    temp |= 0x10000004;
+    GPIOA->CRL = temp;
+#endif
+    
     //--- GPIOA High Side ------------------//
     //PA8 Alternative (TIM1_CH1), starts on default
     //PA9 Alternative (TIM1_CH2)
@@ -143,6 +153,7 @@ void GpioInit (void)
     temp &= 0xFFFF;   
     temp |= 0x0000;
     GPIOA->ODR = temp;
+
 
     //--- GPIOB Low Side -------------------//
     //PB0 ON_OFF

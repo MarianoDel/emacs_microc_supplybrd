@@ -34,17 +34,13 @@
 
 
 //-------- Type of Program and Features ----------------
-// #define USE_NO_TREATMENT_DETECT    //cuando esta en tratamiento revisa si las potencias tambien
-// #define USE_BUZZER_ON_START
+// #define USE_NEOPIXEL_INDICATOR    // this or the next one, use J8 batt status led
+#define USE_POWER_LED_INDICATOR    // use power switch led as status, with minor board modifications
 
 
 //-------- Kind of Reports Sended ----------------
+#define USE_TWO_DECIMAL_IN_BATT_VOLTAGES    // send batt voltages with two decimal places
 
-//-------- Others Configurations depending on the formers ------------
-// #define K_200V    0.0957    //con diodo z prot de 3.1V da error
-// #define K_200V    0.0806    //con diodo z 5.1V
-// #define K_15V    0.00804    //con z 3.1V
-// #define K_15V    0.00619    //con z 5.1V
 
 
 //-------- Oscillator and Crystal selection (Freq in startup_clocks.h) ---
@@ -99,7 +95,11 @@
 // PA5 NC
 // PA6 NC
 
-// PA7 Alterantive (TIM3_CH2)
+// PA7 Alterantive (TIM3_CH2) for neopixel or output for led status on switch
+#define LED_STATUS    ((GPIOA->ODR & 0x0080) != 0)
+#define LED_STATUS_ON    (GPIOA->BSRR = 0x00000080)
+#define LED_STATUS_OFF    (GPIOA->BSRR = 0x00800000)
+
 // PA8 Alterantive (TIM1_CH1)
 
 // PA9 PA10 PA11 NC
@@ -305,12 +305,14 @@
 unsigned char Led_Is_On (void);
 void Led_On (void);
 void Led_Off (void);
-unsigned char Sw_Power_On (void);
+
 unsigned char OnOff_Is_On (void);
 void OnOff_On (void);
 void OnOff_Off (void);
 void Hard_Timeouts (void);
+
 void Sw_Power_On_Update (void);
+unsigned char Sw_Power_On (void);
 #endif
 
 #ifdef HARDWARE_VERSION_1_0

@@ -87,8 +87,10 @@ int main (void)
     // Init Usart3
     Usart3Config();
 
+#ifdef USE_NEOPIXEL_INDICATOR    
     // Init Tim3 for neopixel
     TIM3_Init();
+#endif
 
     // Init Tim1 Tim8 for Boost
     // TIM1_Init_Master_Output_Disable ();
